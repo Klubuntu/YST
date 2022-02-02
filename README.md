@@ -2,7 +2,7 @@
 ![image](https://user-images.githubusercontent.com/49614906/152023865-ceecfad5-41a7-4f53-a10e-3db8513a6d58.png)
 
 ## Future Improvements
-- [ ] More Support Text (YouTube Support, Subscribers Status, etc.)
+- [ ] More Support Text (Members, Subscribers Status, etc.)
 
 ## Required
 ### Python 3 (https://www.python.org/downloads/release/python-3810/) or Windows

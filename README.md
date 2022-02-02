@@ -1,8 +1,13 @@
 # Youtube Stats Tool (YST)
 ![image](https://user-images.githubusercontent.com/49614906/152023865-ceecfad5-41a7-4f53-a10e-3db8513a6d58.png)
 
+## Future Improvements
+- [ ] More Support Text (YouTube Support, Subscribers Status, etc.)
+
 ## Required
 ### Python 3 (https://www.python.org/downloads/release/python-3810/) or Windows
+### Download Code from branch (main) or this link https://github.com/Klubuntu/YST/archive/refs/heads/main.zip
+### Download Latest EXE file from https://github.com/Klubuntu/YST/raw/main/dist/YST.exe or https://github.com/Klubuntu/YST/releases/download/v0.8/YST.exe
 ## How to use
 #### > GUI Method
 1. Run this command or run Exe File (***Unsupported Colors***)

@@ -7,6 +7,8 @@
 ## Releases
 [Click Here](https://github.com/klubuntu/YST/releases/)
 
+[⚡ Future Version](https://github.com/Klubuntu/YST/tree/future-change)
+
 ## Requirements
 ### Python 3 (https://www.python.org/downloads/release/python-3810/) or use precompiled version for Windows
 ### Download Code from branch (main) or this link https://github.com/Klubuntu/YST/archive/refs/heads/main.zip

@@ -2,12 +2,15 @@
 ![image](https://user-images.githubusercontent.com/49614906/152023865-ceecfad5-41a7-4f53-a10e-3db8513a6d58.png)
 
 ## Future Improvements
-- [ ] More Support Text (Members, Subscribers Status, etc.)
+- [ ] Support for more texts (Members, Subscribers Status, etc.)
 
-## Required
-### Python 3 (https://www.python.org/downloads/release/python-3810/) or Windows
+## Releases
+[Click Here](https://github.com/klubuntu/YST/releases/)
+
+## Requirements
+### Python 3 (https://www.python.org/downloads/release/python-3810/) or use precompiled version for Windows
 ### Download Code from branch (main) or this link https://github.com/Klubuntu/YST/archive/refs/heads/main.zip
-### Download Latest EXE file from https://github.com/Klubuntu/YST/raw/main/dist/YST.exe or https://github.com/Klubuntu/YST/releases/download/v0.8/YST.exe
+### Download Latest EXE file [Only Windows] from https://github.com/Klubuntu/YST/raw/main/dist/YST.exe or https://github.com/Klubuntu/YST/releases/download/v0.8/YST.exe
 ## How to use
 #### > GUI Method
 1. Run this command or run Exe File (***Unsupported Colors***)

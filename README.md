@@ -1,4 +1,4 @@
-# Youtube Stats Tool (YST)
+# 📺 Youtube Stats Tool (YST)
 ![image](https://user-images.githubusercontent.com/49614906/152023865-ceecfad5-41a7-4f53-a10e-3db8513a6d58.png)
 
 ## Future Improvements

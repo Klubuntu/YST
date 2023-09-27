@@ -10,7 +10,7 @@ from time import localtime, strftime, sleep
 
 
 sep = "======================================================================"
-soft_dir = os.getcwd() + "\\YST_output"
+soft_dir = os.getcwd() + "//YST_output"
 isExistDir = os.path.exists(soft_dir)
 if (isExistDir):
   pass

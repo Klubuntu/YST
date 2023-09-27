@@ -21,13 +21,13 @@ def main():
             subs = todos['items'][0]['statistics']['subscriberCount']
             videoCount = todos['items'][0]['statistics']['videoCount']
             viewCount = todos['items'][0]['statistics']['viewCount']
-            f = open(f"{soft_dir}\\channel_subscribers.txt", "w")
+            f = open(f"{soft_dir}/channel_subscribers.txt", "w")
             f.write(subs)
             f.close()
-            f = open(f"{soft_dir}\\channel_videoCount.txt", "w")
+            f = open(f"{soft_dir}/channel_videoCount.txt", "w")
             f.write(videoCount)
             f.close()
-            f = open(f"{soft_dir}\\channel_viewsCount.txt", "w")
+            f = open(f"{soft_dir}/channel_viewsCount.txt", "w")
             f.write(viewCount)
             f.close()
         except KeyError:
@@ -45,15 +45,25 @@ def main():
             views = todos2['items'][0]['statistics']['viewCount']
             likes = todos2['items'][0]['statistics']['likeCount']
             comments = todos2['items'][0]['statistics']['commentCount']
-            f = open(f"{soft_dir}\\video_likes.txt", "w")
+            f = open(f"{soft_dir}/video_likes.txt", "w")
             f.write(likes)
             f.close()
-            f = open(f"{soft_dir}\\video_views.txt", "w")
+            f = open(f"{soft_dir}/video_views.txt", "w")
             f.write(views)
             f.close()
-            f = open(f"{soft_dir}\\video_comments.txt", "w")
+            f = open(f"{soft_dir}/video_comments.txt", "w")
             f.write(views)
             f.close()
+        # Complete code for display video thumbnail
+            #thumbnail = todos2['items']
+            #print(thumbnail)
+            #f = open(f"{soft_dir}/video_thumbnail.txt", "w")
+            #f.write(thumbnail)
+            #f.close()
+
+
+
+
         except IndexError:
             print(f"{bcolors.FAIL}Invalid URL or Video ID{bcolors.DEFAULT}")
             exit(sep)
@@ -97,7 +107,7 @@ if __name__ == '__main__':
         main()
     except KeyboardInterrupt:
         print(sep)
-    try:
-        sys.exit(0)
-    except SystemExit:
-        os._exit(0)
+        try:
+          sys.exit(0)
+        except SystemExit:
+          os._exit(0)

@@ -10,12 +10,12 @@
 [⚡ Future Version](https://github.com/Klubuntu/YST/tree/future-change)
 
 ## Requirements
-### Python 3 (https://www.python.org/downloads/release/python-3810/) or use precompiled version for Windows
+### Python 3 (https://www.python.org/downloads/release/python-3810/) or use compiled version for Windows
 ### Download Code from branch (main) or this link https://github.com/Klubuntu/YST/archive/refs/heads/main.zip
 ### Download Latest EXE file [Only Windows] from https://github.com/Klubuntu/YST/raw/main/dist/YST.exe or https://github.com/Klubuntu/YST/releases/download/v0.8/YST.exe
 ## How to use
 #### > GUI Method
-1. Run this command or run Exe File (***Unsupported Colors***)
+1. Run this command or run Exe File (***Unsupported Colors*** if using classic Command Prompt, works in Windows Terminal)
 
 ![image](https://user-images.githubusercontent.com/49614906/152025045-569a8754-a0dc-4ba8-a1d2-fae80fb98552.png)
 

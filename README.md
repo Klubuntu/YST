@@ -36,13 +36,15 @@
 ![image](https://user-images.githubusercontent.com/49614906/152027589-b2fb6316-76a0-44eb-8333-d8d2e7f7efeb.png)
 ##### All Arguments required
 ##### Example Arguments
-> **-channel_id**=UClFN9LShD_Pv0wnSeUKbUZw
+``-channel_id=UClFN9LShD_Pv0wnSeUKbUZw``
 
-> **-video_id**=FJDVKeh7RJI
+``-video_id=FJDVKeh7RJI``
 
-> **-sleep_time**=5 (sec)
+``-sleep_time=5`` (sec)
 
-> **-log_mode**=True/False (other)
+``-log_mode=True/False`` (display_logs)
+
+``-latest_video=True/False`` (get_latest_video from channel)
 
 ![image](https://user-images.githubusercontent.com/49614906/152028676-13bd4e4e-784b-4b76-9df2-7dc8170f7e01.png)
 

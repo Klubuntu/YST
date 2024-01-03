@@ -21,6 +21,7 @@ def main():
     def request_channel(channel_id):
         global subs, videoCount, viewCount
         query = f"https://www.googleapis.com/youtube/v3/channels?part=statistics&id={channel_id}&key={API_KEY}"
+        print(query)
         response = requests.get(query)
         todos = json.loads(response.text)
         try:
@@ -47,9 +48,9 @@ def main():
         response2 = requests.get(query2)
         todos2 = json.loads(response2.text)
         try:
-            views = todos2['items'][0]['statistics']['viewCount']
-            likes = todos2['items'][0]['statistics']['likeCount']
-            comments = todos2['items'][0]['statistics']['commentCount']
+            views = todos2['items'][0]['statistics'].get('viewCount', 0)
+            likes = todos2['items'][0]['statistics'].get('likeCount', 0)
+            comments = todos2['items'][0]['statistics'].get('commentCount', 0)
             f = open(f"{soft_dir}/video_likes.txt", "w")
             f.write(likes)
             f.close()

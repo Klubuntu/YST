@@ -41,7 +41,7 @@ if arguments:
                 arguments2['channel_id'] = channel_query.split("channel/")[1]
             used_channelID = True
         else:
-            exit(f"{bcolors.FAIL}No Found Channel ID or Youtube Link{bcolors.DEFAULT}")
+            sys.exit(f"{bcolors.FAIL}No Found Channel ID or Youtube Link{bcolors.DEFAULT}")
 
 
     if 'latest_video' in arguments:
@@ -56,5 +56,5 @@ if arguments:
                 arguments2['video_id'] = video_query.split("?v=")[1]
             used_videoID = True
         else:
-            exit(f"{bcolors.FAIL}No Found Video ID or Youtube Link{bcolors.DEFAULT}")
+            sys.exit(f"{bcolors.FAIL}No Found Video ID or Youtube Link{bcolors.DEFAULT}")
        

@@ -1,3 +1,4 @@
+import sys
 from time import localtime, sleep, strftime
 from YST_lib.required import *
 from YST_lib.arguments import *
@@ -40,7 +41,7 @@ def main():
         except KeyError as e:
             print(e)
             print(f"{bcolors.FAIL}Invalid URL or Channel ID{bcolors.DEFAULT}")
-            exit(sep)
+            sys.exit(sep)
 
     def request_video(video_id):
         global views,likes,comments
@@ -63,7 +64,7 @@ def main():
         except IndexError as e:
             # print(e)
             print(f"{bcolors.FAIL}Invalid URL or Video ID{bcolors.DEFAULT}")
-            exit(sep)
+            sys.exit(sep)
     def test():
         print(1)
     def result():

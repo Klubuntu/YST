@@ -86,14 +86,23 @@ report_mode = parse_bool(arguments.get("report"), False)
 export_format = parse_choice(arguments.get("export"), EXPORT_FORMATS, None)
 export_path = arguments.get("export_path") or EXPORT_FOLDER
 compare_ids = parse_id_list(arguments.get("compare"))
+compare_channels = parse_id_list(arguments.get("compare_channels"))
+watchlist_path = arguments.get("watchlist")
 
 if list_logs:
     print_available_metrics()
     sys.exit(0)
 
-if not compare_ids and not arguments2.get("channel_id"):
+if not compare_ids and not compare_channels and not watchlist_path and not arguments2.get("channel_id"):
     arguments2["channel_id"] = prompt("Channel", "Paste Your Channel ID or Youtube Link > ")
-if not latest_video and not export_format and not compare_ids and not arguments2.get("video_id"):
+if (
+    not latest_video
+    and not export_format
+    and not compare_ids
+    and not compare_channels
+    and not watchlist_path
+    and not arguments2.get("video_id")
+):
     arguments2["video_id"] = prompt("Video", "Paste Your Video ID or Youtube Link > ")
 
 if arguments2.get("channel_id"):
@@ -104,6 +113,8 @@ if arguments2.get("video_id"):
 options = {
     "channel_id": arguments2.get("channel_id"),
     "compare": compare_ids,
+    "compare_channels": compare_channels,
+    "watchlist": watchlist_path,
     "video_id": arguments2.get("video_id"),
     "sleep_time": sleep_time,
     "log_mode": log_mode,

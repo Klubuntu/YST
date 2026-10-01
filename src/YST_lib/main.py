@@ -6,12 +6,18 @@ import requests
 from colorama import Fore, Style
 
 from YST_lib.arguments import STAT_FILES, options
-from YST_lib.cli import api_error_message, parse_duration, parse_published_at
+from YST_lib.cli import api_error_message, extract_channel_id, parse_duration, parse_published_at
 from YST_lib.banner import print_banner
 from YST_lib.compare import build_rows, print_table
 from YST_lib.dashboard import ROW_ORDER, print_deltas, print_details, print_summary
 from YST_lib.exporter import save
 from YST_lib.report import CHART_KEYS, render_report, save_report
+from YST_lib.watchlist import (
+    build_rows as build_channel_rows,
+    parse_watchlist,
+    print_table as print_channel_table,
+    print_watchlist,
+)
 from YST_lib.history import changes, connect, delta, latest, record, series, window
 from YST_lib.required import (
     API_KEY,
@@ -172,6 +178,64 @@ def fetch_videos(video_ids):
     return videos
 
 
+def fetch_channels(channel_ids):
+    joined = ",".join(channel_ids)
+    query = f"{API_URL}/channels?part=snippet,statistics&id={joined}&key={API_KEY}"
+    try:
+        items = fetch_statistics(query)["items"]
+    except (KeyError, IndexError, TypeError):
+        print(f"{Fore.LIGHTRED_EX}No channels found for the given IDs{Style.RESET_ALL}")
+        sys.exit(1)
+
+    channels = []
+    for item in items:
+        statistics = item.get("statistics", {})
+        hidden = bool(statistics.get("hiddenSubscriberCount", False))
+        channels.append(
+            {
+                "channel_id": item.get("id", ""),
+                "channel_title": item.get("snippet", {}).get("title"),
+                "subs_hidden": hidden,
+                "subs": 0 if hidden else int(statistics.get("subscriberCount", 0) or 0),
+                "channel_views": int(statistics.get("viewCount", 0) or 0),
+                "channel_videos": int(statistics.get("videoCount", 0) or 0),
+            }
+        )
+    return channels
+
+
+def compare_channel_list(channel_ids):
+    channels = fetch_channels(channel_ids)
+    print_channel_table(build_channel_rows(channels))
+    found = {channel["channel_id"] for channel in channels}
+    missing = [channel_id for channel_id in channel_ids if channel_id not in found]
+    if missing:
+        print(f"{Style.DIM}Not found: {', '.join(missing)}{Style.RESET_ALL}\n")
+
+
+def watch_channels(database, channel_ids, last_snapshots):
+    channels = fetch_channels(channel_ids)
+    now = int(time())
+    for channel in channels:
+        values = {
+            "subs": channel["subs"],
+            "channel_videos": channel["channel_videos"],
+            "channel_views": channel["channel_views"],
+        }
+        channel_id = channel["channel_id"]
+        previous = last_snapshots.get(channel_id)
+        if previous is None or now - previous >= options["snapshot_time"]:
+            record(
+                database,
+                channel_id,
+                "",
+                values,
+                {"subs_hidden": channel["subs_hidden"]},
+            )
+            last_snapshots[channel_id] = now
+    print_watchlist(channels)
+
+
 def compare_videos(video_ids):
     videos = fetch_videos(video_ids)
     print_table(build_rows(videos))
@@ -230,7 +294,29 @@ def main():
         compare_videos(options["compare"])
         return
 
+    if options["compare_channels"]:
+        compare_channel_list(options["compare_channels"])
+        return
+
     database = connect(options["history_path"])
+
+    if options["watchlist"]:
+        watch_ids = []
+        for entry in parse_watchlist(options["watchlist"]):
+            resolved = extract_channel_id(entry)
+            if resolved not in watch_ids:
+                watch_ids.append(resolved)
+        if not watch_ids:
+            print(f"{Fore.LIGHTRED_EX}Watchlist '{options['watchlist']}' is empty{Style.RESET_ALL}")
+            sys.exit(1)
+        last_snapshots = {}
+        try:
+            while True:
+                watch_channels(database, watch_ids, last_snapshots)
+                sleep(options["sleep_time"])
+        except KeyboardInterrupt:
+            print(f"{Fore.LIGHTRED_EX}                          User Exit                {Style.RESET_ALL}")
+            sys.exit(0)
 
     if options["report"]:
         write_report(database, channel_id, video_id)

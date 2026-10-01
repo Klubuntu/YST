@@ -28,8 +28,9 @@ The tool is also shipped as a Windows executable, so Python is not required to u
 - **Python 3.8+** – [download](https://www.python.org/downloads/release/python-3810/)
   — or use the compiled Windows build below.
 - **`requests`** – YouTube Data API calls.
-- **`colorama`** – ANSI colors, including native support in the classic Command Prompt.
-- **A YouTube Data API key** – stored in `src/YST_lib/required.py` (`API_KEY`).
+- **`colorama`** – ANSI colors, including native support in the classic Windows Command Prompt.
+- **A YouTube Data API key** – read from the `YOUTUBE_API_KEY` environment variable, falling back
+  to the key in `src/YST_lib/required.py`.
 - **Windows only** – for the pre-built `.exe` release.
 
 ## 📥 Installation
@@ -91,7 +92,8 @@ Alternatively, [download the code as a ZIP](https://github.com/Klubuntu/YST/arch
    | ------------------ | -------------------------------------------------------------------------------------------- |
    | Full channel URL   | `https://www.youtube.com/c/ThatLittlePuff` · `https://www.youtube.com/channel/UClFN9LShD_Pv0wnSeUKbUZw` |
    | Channel ID         | `UClFN9LShD_Pv0wnSeUKbUZw`                                                                    |
-   | Full video URL     | `https://www.youtube.com/watch?v=C7REVNM_EWY`                                                 |
+   | Channel handle     | `@ThatLittlePuff`                                                                             |
+   | Full video URL     | `https://www.youtube.com/watch?v=C7REVNM_EWY` · `https://youtu.be/C7REVNM_EWY`                |
    | Video ID           | `C7REVNM_EWY`                                                                                 |
 
 ### Command-line mode
@@ -108,11 +110,13 @@ python src\YST.py -channel_id=UClFN9LShD_Pv0wnSeUKbUZw -video_id=FJDVKeh7RJI -sl
 
 | Argument       | Type           | Default | Description                                        |
 | -------------- | -------------- | ------- | -------------------------------------------------- |
-| `-channel_id`  | string         | —       | Channel ID, or channel URL in interactive mode      |
-| `-video_id`    | string         | —       | Video ID, or video URL in interactive mode           |
-| `-sleep_time`  | int (seconds)  | `2`     | Delay between two statistic refreshes                |
-| `-log_mode`    | `True`/`False` | `False` | Print results to the console instead of only files   |
-| `-latest_video`| `True`/`False` | `False` | Fetch the latest video ID from the channel           |
+| `-channel_id`  | string         | —       | Channel ID, `@handle`, or channel URL               |
+| `-video_id`    | string         | —       | Video ID or video URL                               |
+| `-sleep_time`  | int (seconds)  | `2`     | Delay between two statistic refreshes               |
+| `-log_mode`    | `True`/`False` | `False` | Print results to the console instead of only files  |
+| `-latest_video`| `True`/`False` | `False` | Fetch the latest video ID from the channel          |
+
+Boolean flags accept `true`/`false`, `1`/`0`, `yes`/`no` and `on`/`off`, in any case.
 
 ![Command-line result](assets/screenshots/cli-result.png)
 
@@ -147,7 +151,7 @@ scripts\run.bat
 .
 ├── src/                  # application source
 │   ├── YST.py            # entry point
-│   └── YST_lib/          # arguments parsing, configuration, ASCII banner, main loop
+│   └── YST_lib/          # arguments parsing, ASCII banner, main loop
 ├── assets/               # screenshots and support badges used by this README
 ├── build/YST.spec        # PyInstaller recipe for the Windows executable
 ├── scripts/run.bat       # Windows launcher

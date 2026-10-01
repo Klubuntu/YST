@@ -1,27 +1,30 @@
-import requests
-import json
-import sys
 import os
-from colorama import Fore, Style, init as init_colors
+import sys
 
-sys.path.append("..")
+import requests
+from colorama import Fore, Style, init as init_colors
 
 init_colors()
 
 sep = "======================================================================"
-soft_dir = os.getcwd() + "//txt"
-isExistDir = os.path.exists(soft_dir)
-if not (isExistDir):
-  os.makedirs(soft_dir)
+soft_dir = os.path.join(os.getcwd(), "txt")
+
+API_URL = "https://www.googleapis.com/youtube/v3"
+REQUEST_TIMEOUT = 10
+API_KEY = os.environ.get("YOUTUBE_API_KEY", "AIzaSyBGX0yQtfRPu9CRBEC4mZ95fnvNj00msik")
 
 # default arguments
 sleep_time = 2
+logmode = False
+get_latest_video = False
 video_id = ""
 channel_id = ""
-channel_query = ""
-used_channelID = False
-used_videoID = False
-get_latest_video = False
-logmode = False
 
-API_KEY = "AIzaSyBGX0yQtfRPu9CRBEC4mZ95fnvNj00msik"
+
+def ensure_output_dir():
+    try:
+        os.makedirs(soft_dir, exist_ok=True)
+    except OSError as e:
+        print(f"{Fore.LIGHTRED_EX}Cannot create output folder '{soft_dir}': {e}{Style.RESET_ALL}")
+        sys.exit(1)
+    return soft_dir

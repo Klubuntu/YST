@@ -1,63 +1,50 @@
-import sys
 import copy
+import sys
 
 from colorama import Fore, Style
 
 from YST_lib.required import *
+from YST_lib.cli import (
+    check_arg,
+    extract_channel_id,
+    extract_video_id,
+    parse_bool,
+    parse_int,
+)
 
-def check_arg():
-    if len(sys.argv) > 1:
-        args = {}
-        for argument in sys.argv[1:]:
-            if argument.startswith("-"):
-                arg_parts = argument.split("=")
-                if len(arg_parts) == 2:
-                    arg_name = arg_parts[0][1:]
-                    arg_value = arg_parts[1]
-                    args[arg_name] = arg_value
-        return args
+
+def prompt(label, message):
+    try:
+        value = input(f"{Style.BRIGHT}{message}").strip()
+    except EOFError:
+        sys.exit(f"{Fore.LIGHTRED_EX}No Found {label} ID or Youtube Link{Style.RESET_ALL}")
+    except KeyboardInterrupt:
+        sys.exit(f"{Fore.LIGHTRED_EX}Cancelled{Style.RESET_ALL}")
+    if len(value) < 2:
+        sys.exit(f"{Fore.LIGHTRED_EX}No Found {label} ID or Youtube Link{Style.RESET_ALL}")
+    return value
+
 
 arguments = check_arg()
 arguments2 = copy.copy(arguments)
 
-if arguments:
-    for arg_name, arg_value in arguments.items():
-        try:
-            if arg_name == "channel_id" and not used_channelID:
-                channel_id = arg_value
-                used_channelID = True
-            elif arg_name == "video_id" and not used_videoID:
-                video_id = arg_value
-                used_videoID = True
-            elif arg_name == "latest_video" and not used_latestVideo:
-                latest_video = arg_value
-                used_latestVideo = True
-        except:
-            pass
+log_mode = parse_bool(arguments.get("log_mode"), logmode)
+latest_video = parse_bool(arguments.get("latest_video"), get_latest_video)
+sleep_time = parse_int(arguments.get("sleep_time"), sleep_time, "sleep_time")
 
-    if not used_channelID:
-        channel_query = input(f"{Style.BRIGHT}Paste Your Channel ID or Youtube Link > ")
-        if len(channel_query) > 1:
-            if "youtube.com/channel/" not in channel_query:
-                arguments2['channel_id'] = channel_query
-            else:
-                arguments2['channel_id'] = channel_query.split("channel/")[1]
-            used_channelID = True
-        else:
-            sys.exit(f"{Fore.LIGHTRED_EX}No Found Channel ID or Youtube Link{Style.RESET_ALL}")
+if not arguments2.get("channel_id"):
+    arguments2["channel_id"] = prompt("Channel", "Paste Your Channel ID or Youtube Link > ")
+if not latest_video and not arguments2.get("video_id"):
+    arguments2["video_id"] = prompt("Video", "Paste Your Video ID or Youtube Link > ")
 
+arguments2["channel_id"] = extract_channel_id(arguments2["channel_id"])
+if arguments2.get("video_id"):
+    arguments2["video_id"] = extract_video_id(arguments2["video_id"])
 
-    if 'latest_video' in arguments:
-        used_videoID = True
-
-    if not used_videoID:
-        video_query = input(f"{Style.BRIGHT}Paste Your Video ID or Youtube Link > ")
-        if len(video_query) > 1:
-            if "?v=" not in video_query:
-                arguments2['video_id'] = video_query
-            else:
-                arguments2['video_id'] = video_query.split("?v=")[1]
-            used_videoID = True
-        else:
-            sys.exit(f"{Fore.LIGHTRED_EX}No Found Video ID or Youtube Link{Style.RESET_ALL}")
-       
+options = {
+    "channel_id": arguments2["channel_id"],
+    "video_id": arguments2.get("video_id"),
+    "sleep_time": sleep_time,
+    "log_mode": log_mode,
+    "latest_video": latest_video,
+}

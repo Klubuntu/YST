@@ -1,5 +1,7 @@
 from YST_lib.dashboard import (
     downsample,
+    format_chart,
+    render_chart,
     format_change,
     format_deltas,
     format_number,
@@ -102,3 +104,32 @@ def test_summary_notes_missing_member_metrics():
     }
     lines = format_summary(changes, 24, {})
     assert any("YouTube Data API v3" in line for line in lines)
+
+
+def test_render_chart_needs_two_points():
+    assert render_chart([(1, 5)]) == []
+    assert render_chart([]) == []
+
+
+def test_render_chart_height_and_width():
+    points = [(i, 1000 + i * i) for i in range(40)]
+    chart = render_chart(points, height=6, width=20)
+    assert len(chart) == 7
+    assert all(len(line) == 20 for line in chart[:6])
+
+
+def test_render_chart_flat_series():
+    chart = render_chart([(i, 5000) for i in range(10)], height=4)
+    assert len(chart) == 5
+    assert set(chart[0]) == {"▁"}
+
+
+def test_render_chart_labels_the_range():
+    chart = render_chart([(i, 1000 + i) for i in range(10)], height=3)
+    assert "1 000" in chart[-1]
+    assert "1 009" in chart[-1]
+
+
+def test_format_chart_colors_the_block():
+    lines = format_chart([(i, i) for i in range(5)], "video_views", height=3)
+    assert lines and all(line.endswith("\x1b[0m") for line in lines)

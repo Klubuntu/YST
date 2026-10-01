@@ -24,6 +24,8 @@ METRIC_COLORS = {
     "video_comments": Fore.LIGHTRED_EX,
 }
 
+CHART_KEYS = ("video_views", "channel_views", "subs")
+
 ROW_ORDER = (
     "subs",
     "channel_views",
@@ -88,6 +90,39 @@ def format_deltas(values, delta, selected=None, hidden=False):
     return lines
 
 
+def render_chart(points, height=10, width=60):
+    if len(points) < 2:
+        return []
+    values = downsample([value for _, value in points], width)
+    if len(values) < 2:
+        return []
+    low, high = min(values), max(values)
+    span = high - low or 1
+    levels = len(SPARK_CHARS)
+
+    rows = [[] for _ in range(height)]
+    for value in values:
+        filled = (value - low) / span * (height * levels)
+        for row in range(height):
+            offset = filled - row * levels
+            index = max(min(int(offset), levels - 1), 0)
+            rows[row].append(SPARK_CHARS[index])
+
+    lines = ["".join(row) for row in rows]
+    left, right = format_number(low), format_number(high)
+    gap = max(len(values) - len(left) - len(right), 1)
+    lines.append(left + " " * gap + right)
+    return lines
+
+
+def format_chart(points, label, height=10):
+    chart = render_chart(points, height)
+    if not chart:
+        return []
+    color = METRIC_COLORS.get(label, "")
+    return [f"{color}{line}{Style.RESET_ALL}" for line in chart]
+
+
 def format_summary(changes, hours, samples, spark_key="video_views"):
     if not changes:
         return [
@@ -134,8 +169,15 @@ def print_deltas(values, delta, selected=None, hidden=False):
     print("")
 
 
-def print_summary(changes, hours, samples):
-    for line in format_summary(changes, hours, samples):
+def print_summary(changes, hours, samples, charts=False):
+    lines = format_summary(changes, hours, samples)
+    if charts:
+        for key in CHART_KEYS:
+            block = format_chart(samples.get(key, []), key)
+            if block:
+                lines.append(f"{METRIC_COLORS.get(key, '')}{METRIC_LABELS.get(key, key)}:{Style.RESET_ALL}")
+                lines.extend(block)
+    for line in lines:
         print(line)
     print("")
 

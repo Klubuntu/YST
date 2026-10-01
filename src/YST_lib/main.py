@@ -126,7 +126,7 @@ def show(database, channel_id, video_id, values, meta, previous):
     hours = options["history_hours"]
     summary = changes(database, channel_id, video_id, hours)
     samples = {key: series(database, channel_id, key, video_id, hours) for key in ROW_ORDER}
-    print_summary(summary, hours, samples)
+    print_summary(summary, hours, samples, options["chart"])
 
 
 def collect(channel_id, video_id):

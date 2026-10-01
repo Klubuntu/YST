@@ -86,9 +86,55 @@ def parse_int(value, default, name="value"):
     return parsed
 
 
+SUBCOMMANDS = ("video", "channel", "latest", "monitor", "compare", "export")
+
+SUBCOMMAND_HELP = """usage: yst <command> [options]
+
+commands:
+  video <ID>       track one video (channel is asked for)
+  channel <ID>     track a channel with its latest video
+  latest <ID>      same as channel, for the newest video
+  monitor <ID>     channel monitoring with console output and deltas
+  compare <ID...>  compare up to 50 videos side by side
+  export <ID>      export the stored history to CSV and exit
+
+Every command also accepts the regular options, for example:
+  yst monitor UCifZaTQPiHE2QRgEwDNfhug -sleep_time=60 -dashboard=True
+"""
+
+
+def expand_subcommand(tokens):
+    if not tokens or tokens[0] not in SUBCOMMANDS:
+        return tokens
+
+    command, rest = tokens[0], list(tokens[1:])
+    if rest and rest[0].startswith("-"):
+        sys.exit(
+            f"{Fore.LIGHTRED_EX}'{command}' needs an ID, for example "
+            f"'yst {command} UCifZaTQPiHE2QRgEwDNfhug'.{Style.RESET_ALL}"
+        )
+
+    prefix = {
+        "video": [],
+        "channel": ["-latest_video=True"],
+        "latest": ["-latest_video=True"],
+        "monitor": ["-latest_video=True", "-log_mode=True"],
+        "compare": [],
+        "export": ["-export=csv"],
+    }[command]
+
+    if command == "compare":
+        return ["-compare", ",".join(rest), *prefix]
+    if command == "video":
+        return ["-video_id", rest[0], *rest[1:], *prefix]
+    if command == "export":
+        return ["-channel_id", rest[0], *rest[1:], *prefix]
+    return ["-channel_id", rest[0], *rest[1:], *prefix]
+
+
 def check_arg(argv=None):
     args = {}
-    tokens = list(sys.argv[1:] if argv is None else argv)
+    tokens = expand_subcommand(sys.argv[1:] if argv is None else argv)
     index = 0
     while index < len(tokens):
         token = tokens[index]

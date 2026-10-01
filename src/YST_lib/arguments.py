@@ -6,6 +6,7 @@ from colorama import Fore, Style
 
 from YST_lib.cli import (
     STAT_FILES,
+    SUBCOMMAND_HELP,
     check_arg,
     extract_channel_id,
     extract_video_id,
@@ -63,6 +64,10 @@ def parse_choice(value, choices, default):
         )
     return normalized
 
+
+if len(sys.argv) > 1 and sys.argv[1] in ("-h", "--help", "help"):
+    print(SUBCOMMAND_HELP)
+    sys.exit(0)
 
 arguments = check_arg()
 arguments2 = copy.copy(arguments)

@@ -66,3 +66,47 @@ def test_extract_video_id_variants():
     assert extract_video_id("https://youtu.be/C7REVNM_EWY") == "C7REVNM_EWY"
     assert extract_video_id("https://www.youtube.com/shorts/C7REVNM_EWY") == "C7REVNM_EWY"
     assert extract_video_id("https://www.youtube.com/live/C7REVNM_EWY") == "C7REVNM_EWY"
+
+def test_expand_subcommand_monitor():
+    parsed = check_arg(["monitor", "UCabc", "-sleep_time", "60"])
+    assert parsed == {
+        "channel_id": "UCabc",
+        "sleep_time": "60",
+        "latest_video": "True",
+        "log_mode": "True",
+    }
+
+
+def test_expand_subcommand_video():
+    assert check_arg(["video", "abc123"]) == {"video_id": "abc123"}
+
+
+def test_expand_subcommand_compare_joins_ids():
+    assert check_arg(["compare", "a", "b", "c"]) == {"compare": "a,b,c"}
+
+
+def test_expand_subcommand_export_defaults_to_csv():
+    assert check_arg(["export", "UCabc"]) == {"channel_id": "UCabc", "export": "csv"}
+
+
+def test_expand_subcommand_channel_uses_latest_video():
+    assert check_arg(["channel", "UCabc"]) == {
+        "channel_id": "UCabc",
+        "latest_video": "True",
+    }
+
+
+def test_subcommand_requires_an_id():
+    try:
+        check_arg(["monitor", "-log_mode=True"])
+    except SystemExit as exit_code:
+        assert "needs an ID" in str(exit_code)
+    else:
+        raise AssertionError("expected SystemExit")
+
+
+def test_flags_still_work_without_subcommand():
+    assert check_arg(["-channel_id=UCabc", "-video_id=abc"]) == {
+        "channel_id": "UCabc",
+        "video_id": "abc",
+    }

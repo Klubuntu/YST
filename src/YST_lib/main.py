@@ -15,14 +15,18 @@ def date():
     print(f"{Style.NORMAL}{current_time}{Style.RESET_ALL}")
 
 
-def write_stat(filename, value):
+def write_stats(values):
     ensure_output_dir()
-    try:
-        with open(os.path.join(soft_dir, filename), "w") as f:
-            f.write(str(value))
-    except OSError as e:
-        print(f"{Fore.LIGHTRED_EX}Cannot write '{filename}': {e}{Style.RESET_ALL}")
-        sys.exit(1)
+    for key, value in values.items():
+        if key not in options["log_selection"]:
+            continue
+        filename = STAT_FILES[key]
+        try:
+            with open(os.path.join(soft_dir, filename), "w") as f:
+                f.write(str(value))
+        except OSError as e:
+            print(f"{Fore.LIGHTRED_EX}Cannot write '{filename}': {e}{Style.RESET_ALL}")
+            sys.exit(1)
 
 
 def fetch_statistics(url):
@@ -53,9 +57,13 @@ def request_channel(channel_id):
         print(f"{Fore.LIGHTRED_EX}Invalid URL or Channel ID{Style.RESET_ALL}")
         sys.exit(1)
 
-    write_stat("channel_subscribers.txt", statistics.get("subscriberCount", 0))
-    write_stat("channel_videoCount.txt", statistics.get("videoCount", 0))
-    write_stat("channel_viewsCount.txt", statistics.get("viewCount", 0))
+    write_stats(
+        {
+            "subs": statistics.get("subscriberCount", 0),
+            "channel_videos": statistics.get("videoCount", 0),
+            "channel_views": statistics.get("viewCount", 0),
+        }
+    )
     return statistics
 
 
@@ -67,19 +75,28 @@ def request_video(video_id):
         print(f"{Fore.LIGHTRED_EX}Invalid URL or Video ID{Style.RESET_ALL}")
         sys.exit(1)
 
-    write_stat("video_views.txt", statistics.get("viewCount", 0))
-    write_stat("video_likes.txt", statistics.get("likeCount", 0))
-    write_stat("video_comments.txt", statistics.get("commentCount", 0))
+    write_stats(
+        {
+            "video_views": statistics.get("viewCount", 0),
+            "video_likes": statistics.get("likeCount", 0),
+            "video_comments": statistics.get("commentCount", 0),
+        }
+    )
     return statistics
 
 
 def result(channel, video):
-    print(f"{Fore.LIGHTGREEN_EX}Subscribers: {channel.get('subscriberCount', 0)}")
-    print(f"{Fore.LIGHTCYAN_EX}Channel Views: {channel.get('viewCount', 0)}")
-    print(f"{Fore.LIGHTBLUE_EX}Channel Videos: {channel.get('videoCount', 0)}")
-    print(f"{Fore.MAGENTA}Video Likes: {video.get('likeCount', 0)}")
-    print(f"{Fore.LIGHTRED_EX}Video Comments: {video.get('commentCount', 0)}")
-    print(f"{Fore.LIGHTYELLOW_EX}Video Views: {video.get('viewCount', 0)}{Style.RESET_ALL}")
+    rows = (
+        ("subs", "Subscribers", Fore.LIGHTGREEN_EX, channel.get("subscriberCount", 0)),
+        ("channel_views", "Channel Views", Fore.LIGHTCYAN_EX, channel.get("viewCount", 0)),
+        ("channel_videos", "Channel Videos", Fore.LIGHTBLUE_EX, channel.get("videoCount", 0)),
+        ("video_likes", "Video Likes", Fore.MAGENTA, video.get("likeCount", 0)),
+        ("video_comments", "Video Comments", Fore.LIGHTRED_EX, video.get("commentCount", 0)),
+        ("video_views", "Video Views", Fore.LIGHTYELLOW_EX, video.get("viewCount", 0)),
+    )
+    for key, label, color, value in rows:
+        if key in options["log_selection"]:
+            print(f"{color}{label}: {value}{Style.RESET_ALL}")
     print("")
 
 
@@ -92,6 +109,10 @@ def main():
     channel_id = options["channel_id"]
     video_id = options["video_id"]
     ensure_output_dir()
+
+    selection = options["log_selection"]
+    if selection != set(STAT_FILES):
+        print(f"{Style.BRIGHT}Logged metrics: {Fore.YELLOW}{', '.join(sorted(selection))}{Style.RESET_ALL}")
 
     try:
         if options["latest_video"]:

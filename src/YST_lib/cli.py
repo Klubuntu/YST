@@ -1,3 +1,4 @@
+import re
 import sys
 
 import requests
@@ -5,11 +6,69 @@ from colorama import Fore, Style
 
 TRUE_VALUES = ("1", "true", "yes", "on")
 
+STAT_FILES = {
+    "subs": "channel_subscribers.txt",
+    "channel_views": "channel_viewsCount.txt",
+    "channel_videos": "channel_videoCount.txt",
+    "video_views": "video_views.txt",
+    "video_likes": "video_likes.txt",
+    "video_comments": "video_comments.txt",
+}
+
+STAT_ALIASES = {
+    "subscriber_count": "subs",
+    "subscribers": "subs",
+    "channel_subscribers": "subs",
+    "channel_views_count": "channel_views",
+    "channel_view_count": "channel_views",
+    "channel_videocount": "channel_videos",
+    "channel_video_count": "channel_videos",
+    "videos": "channel_videos",
+    "views": "video_views",
+    "likes": "video_likes",
+    "comments": "video_comments",
+}
+
 
 def parse_bool(value, default):
     if value is None:
         return default
     return value.strip().lower() in TRUE_VALUES
+
+
+def normalize_stat(name):
+    key = name.strip().lower().replace("-", "_").replace(" ", "_")
+    key = STAT_ALIASES.get(key, key)
+    return key if key in STAT_FILES else None
+
+
+def parse_stat_list(value):
+    keys = []
+    for name in re.split(r"[,\s]+", value or ""):
+        if not name:
+            continue
+        key = normalize_stat(name)
+        if key is None:
+            sys.exit(
+                f"{Fore.LIGHTRED_EX}Unknown metric '{name}'.{Style.RESET_ALL}\n"
+                f"{Style.BRIGHT}Available: {Fore.YELLOW}{', '.join(STAT_FILES)}{Style.RESET_ALL}"
+            )
+        if key not in keys:
+            keys.append(key)
+    return keys
+
+
+def resolve_log_selection(enable=None, disable=None):
+    enabled = parse_stat_list(enable)
+    disabled = parse_stat_list(disable)
+
+    if enabled and disabled:
+        sys.exit(
+            f"{Fore.LIGHTRED_EX}Use either -enable_log or -disable_log, not both.{Style.RESET_ALL}"
+        )
+    if enabled:
+        return set(enabled)
+    return set(STAT_FILES) - set(disabled)
 
 
 def parse_int(value, default, name="value"):
@@ -28,10 +87,20 @@ def parse_int(value, default, name="value"):
 
 def check_arg(argv=None):
     args = {}
-    for argument in sys.argv[1:] if argv is None else argv:
-        if not argument.startswith("-") or "=" not in argument:
+    tokens = list(sys.argv[1:] if argv is None else argv)
+    index = 0
+    while index < len(tokens):
+        token = tokens[index]
+        index += 1
+        if not token.startswith("-"):
             continue
-        name, _, value = argument[1:].partition("=")
+        name, separator, value = token[1:].partition("=")
+        if not separator:
+            values = []
+            while index < len(tokens) and not tokens[index].startswith("-"):
+                values.append(tokens[index])
+                index += 1
+            value = " ".join(values)
         if name:
             args[name] = value
     return args

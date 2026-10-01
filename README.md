@@ -115,8 +115,43 @@ python src\YST.py -channel_id=UClFN9LShD_Pv0wnSeUKbUZw -video_id=FJDVKeh7RJI -sl
 | `-sleep_time`  | int (seconds)  | `2`     | Delay between two statistic refreshes               |
 | `-log_mode`    | `True`/`False` | `False` | Print results to the console instead of only files  |
 | `-latest_video`| `True`/`False` | `False` | Fetch the latest video ID from the channel          |
+| `-enable_log`  | metric list    | all     | Log only the listed metrics                         |
+| `-disable_log` | metric list    | —       | Log everything except the listed metrics            |
+| `-list_logs`   | `True`/`False` | `False` | Print the available metric keys and exit            |
 
-Boolean flags accept `true`/`false`, `1`/`0`, `yes`/`no` and `on`/`off`, in any case.
+Values can be attached with `=` or passed as the next token, so
+`-sleep_time=5` and `-sleep_time 5` are the same. Boolean flags accept
+`true`/`false`, `1`/`0`, `yes`/`no` and `on`/`off`, in any case.
+
+#### Choosing which metrics to log
+
+By default every metric is logged. Narrow it down with `-enable_log`, or keep
+everything except a few with `-disable_log` — both take a comma- or
+space-separated list:
+
+```bash
+# only these two
+python src\YST.py -channel_id=UCifZaTQPiHE2QRgEwDNfhug -video_id=C7REVNM_EWY -enable_log subs, video_views
+
+# everything except these two
+python src\YST.py -channel_id=UCifZaTQPiHE2QRgEwDNfhug -video_id=C7REVNM_EWY -disable_log subs, video_views
+```
+
+| Key              | File                      |
+| ---------------- | ------------------------- |
+| `subs`           | `channel_subscribers.txt` |
+| `channel_views`  | `channel_viewsCount.txt`  |
+| `channel_videos` | `channel_videoCount.txt`  |
+| `video_views`    | `video_views.txt`         |
+| `video_likes`    | `video_likes.txt`         |
+| `video_comments` | `video_comments.txt`      |
+
+Short aliases are accepted too (`subscribers`, `views`, `likes`, `comments`,
+`videos`, …), keys are case-insensitive, and `-list_logs=True` prints the full
+list with its output file. The two flags are mutually exclusive, an unknown
+metric stops the tool with the valid names, and the active selection is echoed
+on start-up. Disabled metrics are neither written to disk nor printed in
+`-log_mode=True`.
 
 ![Command-line result](assets/screenshots/cli-result.png)
 
@@ -136,6 +171,8 @@ txt/
 ├── video_likes.txt
 └── video_views.txt
 ```
+
+Only the metrics selected with `-enable_log` / `-disable_log` are written.
 
 ### Windows launcher
 

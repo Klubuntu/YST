@@ -160,6 +160,10 @@ python src\YST.py -channel_id=UClFN9LShD_Pv0wnSeUKbUZw -video_id=FJDVKeh7RJI -sl
 | `-export`      | `csv`/`json`  | —       | Export the stored history and exit                   |
 | `-export_path` | path          | `exports` | Folder for exported files                         |
 | `-compare`     | video list    | —       | Compare videos side by side and exit               |
+| `-compare_channels` | channel list | —    | Compare channels side by side and exit             |
+| `-watchlist`   | path          | —       | Monitor every channel listed in a text file        |
+| `-chart`       | `True`/`False` | `False` | Draw block charts of the history window            |
+| `-report`      | `True`/`False` | `False` | Write an HTML report with SVG charts and exit      |
 
 Values can be attached with `=` or passed as the next token, so
 `-sleep_time=5` and `-sleep_time 5` are the same. Boolean flags accept
@@ -269,6 +273,65 @@ C7REVNM_EWY = Meow Chef— anyone want to help the cat clean the table? (0:12)
 huge rate; it shows `n/a` when a length is unknown. IDs that do not exist are
 listed below the table.
 
+### Comparing channels
+
+`-compare_channels` does the same for channels, adding views per video:
+
+```bash
+python src/YST.py -compare_channels UClFN9LShD_Pv0wnSeUKbUZw,UCifZaTQPiHE2QRgEwDNfhug
+```
+
+```
+              Channel              Subs          Views   Videos    Views/video
+------------------------------------------------------------------------------------
+UCifZaTQPiHE2QRgEwDNfhug          693        152 486      434           351
+UClFN9LShD_Pv0wnSeUKbUZw   38 600 000 37 278 025 432    1 290    28 897 694
+```
+
+### Watchlist
+
+`-watchlist` monitors several channels at once. The file takes one channel per
+line, `#` starts a comment and `@handle` entries are resolved:
+
+```
+# watchlist.txt
+UClFN9LShD_Pv0wnSeUKbUZw
+@ThatLittlePuff
+UCifZaTQPiHE2QRgEwDNfhug
+```
+
+```bash
+python src/YST.py -watchlist watchlist.txt -sleep_time=60 -snapshot_time=300
+```
+
+```
+UClFN9LShD_Pv0wnSeUKbUZw   subs   38 600 000   views   37 278 025 432   videos    1 290
+UCifZaTQPiHE2QRgEwDNfhug   subs          693   views          152 486   videos      434
+```
+
+Each channel gets its own snapshots in the history database, and channels that
+resolve to the same ID are only fetched once. Channels that hide their
+subscriber count show `hidden` instead of a misleading zero — the same applies
+to the single-channel view.
+
+### Charts and HTML report
+
+`-chart=True` draws block charts of the selected window next to the dashboard,
+while the one-line sparkline stays for a quick look:
+
+```bash
+python src/YST.py monitor UCifZaTQPiHE2QRgEwDNfhug -dashboard=True -chart=True -history=168
+```
+
+`-report=True` writes a self-contained HTML file to the export folder with one
+SVG line chart per metric, the min/max range and a table of the stored values:
+
+```bash
+python src/YST.py -channel_id=UC... -video_id=... -report=True -history=168
+```
+
+The report has no external assets, so it can be shared as a single file.
+
 ### Output files
 
 Statistics are refreshed and written to the `txt/` folder next to the current working directory:
@@ -303,7 +366,14 @@ git clone https://github.com/Klubuntu/YST.git
 cd YST
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-python src/YST.py -channel_id=UCifZaTQPiHE2QRgEwDNfhug -video_id=C7REVNM_EWY -log_mode=True
+./scripts/yst monitor UCifZaTQPiHE2QRgEwDNfhug -dashboard=True
+```
+
+Releases also ship a self-contained `yst` binary for Linux and macOS:
+
+```bash
+chmod +x yst
+./yst monitor UCifZaTQPiHE2QRgEwDNfhug -dashboard=True
 ```
 
 ## 📁 Project structure
@@ -315,7 +385,7 @@ python src/YST.py -channel_id=UCifZaTQPiHE2QRgEwDNfhug -video_id=C7REVNM_EWY -lo
 │   └── YST_lib/          # parsing, banner, history, dashboard, compare, export
 ├── assets/               # screenshots and support badges used by this README
 ├── build/YST.spec        # PyInstaller recipe for the Windows executable
-├── scripts/run.bat       # Windows launcher
+├── scripts/              # run.bat for Windows, yst wrapper for Linux and macOS
 ├── tests/                # pytest suite
 ├── tools/check_args.py   # small helper for inspecting CLI arguments
 └── dist/                 # released executables
@@ -344,6 +414,13 @@ pyinstaller build/YST.spec
 - [All releases](https://github.com/klubuntu/YST/releases/)
 - [In-development branch](https://github.com/Klubuntu/YST/tree/future-change)
 
+Publishing a release: tag the repository with `v*` and push. The
+[release workflow](.github/workflows/release.yml) runs the tests, builds
+`YST.exe`, `yst` (Linux) and `yst` (macOS), attaches a SHA-256 checksum for
+each and creates the release. Adding a `GPG_PRIVATE_KEY` secret (and optionally
+`GPG_PASSPHRASE`) also attaches a signature of the checksum file; without a key
+that step is skipped.
+
 ## 🗺️ Roadmap
 
 Done in this repository:
@@ -353,7 +430,10 @@ Done in this repository:
 - [x] Dashboard with 24h summary, per-hour rates and sparkline
 - [x] CSV and JSON export
 - [x] Video comparison with like, comment and views-per-hour ratios
-- [x] Publication date and video length
+- [x] Channel comparison and a watchlist of several channels
+- [x] Publication date and video length, and hidden subscriber counts
+- [x] Terminal block charts over a longer window and a self-contained HTML report
+- [x] Releases with Linux and macOS binaries, checksums and optional GPG signature
 - [x] Sub-commands (`video`, `channel`, `latest`, `monitor`, `compare`, `export`) next to the flags
 - [x] `.env` configuration and messages for invalid keys, spent quota and rate limits
 - [x] pytest suite and a CI workflow building the Windows executable
@@ -361,10 +441,9 @@ Done in this repository:
 
 Planned:
 
-- [ ] Subscriber status and membership counts, if YouTube opens them up again
-- [ ] Signed releases and binaries for Linux and macOS
-- [ ] Charts in the terminal over a longer window, and an HTML report
-- [ ] Channel-level comparison and a watchlist of several channels
+- [ ] Scheduled runs documented for cron, systemd and Task Scheduler
+- [ ] Channel-level trends in the report, not only per video
+- [ ] Alerting, for example when a video passes a views threshold
 - ~~Support for more texts (Members, Subscribers Status, etc.)~~ — *YouTube removed them from the public API*
 
 ## 💖 Support this project

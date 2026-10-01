@@ -60,6 +60,21 @@ pip install -r requirements.txt
 
 Alternatively, [download the code as a ZIP](https://github.com/Klubuntu/YST/archive/refs/heads/main.zip).
 
+## ⚙️ Configuration
+
+The API key is read from the `YOUTUBE_API_KEY` environment variable, falling
+back to the built-in key. Copy `.env.example` to `.env` next to the working
+directory to set it there instead of exporting it for every run:
+
+```
+# .env
+YOUTUBE_API_KEY=your-key-here
+```
+
+An environment variable always wins over `.env`. Invalid keys, exhausted quota,
+a disabled API and rate limiting are reported with a message explaining what to
+do, rather than an HTTP error.
+
 ## 🚀 Usage
 
 ### Interactive mode
@@ -96,6 +111,26 @@ Alternatively, [download the code as a ZIP](https://github.com/Klubuntu/YST/arch
    | Full video URL     | `https://www.youtube.com/watch?v=C7REVNM_EWY` · `https://youtu.be/C7REVNM_EWY`                |
    | Video ID           | `C7REVNM_EWY`                                                                                 |
 
+### Sub-commands
+
+Shortcuts for the frequent runs. Each one expands to the flags shown, and every
+option still works afterwards:
+
+| Command             | Equivalent to                                                       |
+| ------------------- | ------------------------------------------------------------------- |
+| `video <ID>`        | `-video_id=<ID>` (channel is asked for)                              |
+| `channel <ID>`      | `-channel_id=<ID> -latest_video=True`                                |
+| `latest <ID>`       | `-channel_id=<ID> -latest_video=True`                                |
+| `monitor <ID>`      | `-channel_id=<ID> -latest_video=True -log_mode=True`                 |
+| `compare <ID...>`   | `-compare=<ID1,ID2,...>`                                             |
+| `export <ID>`       | `-channel_id=<ID> -export=csv`                                       |
+
+```bash
+python src/YST.py --help
+python src/YST.py monitor UCifZaTQPiHE2QRgEwDNfhug -sleep_time=60 -dashboard=True
+python src/YST.py compare C7REVNM_EWY Xknt3_QJY7o
+```
+
 ### Command-line mode
 
 Pass all arguments at once:
@@ -124,6 +159,7 @@ python src\YST.py -channel_id=UClFN9LShD_Pv0wnSeUKbUZw -video_id=FJDVKeh7RJI -sl
 | `-db`          | path          | `data/yst.db` | Location of the history database            |
 | `-export`      | `csv`/`json`  | —       | Export the stored history and exit                   |
 | `-export_path` | path          | `exports` | Folder for exported files                         |
+| `-compare`     | video list    | —       | Compare videos side by side and exit               |
 
 Values can be attached with `=` or passed as the next token, so
 `-sleep_time=5` and `-sleep_time 5` are the same. Boolean flags accept
@@ -212,6 +248,27 @@ recorded_at,channel_id,video_id,subs,channel_views,channel_videos,video_views,vi
 1790883289,UCifZaTQPiHE2QRgEwDNfhug,Xknt3_QJY7o,693,152486,434,43,3,0
 ```
 
+### Comparing videos
+
+`-compare` fetches up to 50 videos in a single API call and prints their
+performance next to each other:
+
+```bash
+python src/YST.py -compare C7REVNM_EWY,Xknt3_QJY7o
+```
+
+```
+     Video        Views      Likes  Comments   Like%  Comment%     Views/h
+--------------------------------------------------------------------------------
+C7REVNM_EWY     2 827 211    157 438       428   5.57%     0.02%    848.2M/h
+Xknt3_QJY7o            43          3         0   6.98%     0.00%        13/h
+C7REVNM_EWY = Meow Chef— anyone want to help the cat clean the table? (0:12)
+```
+
+`Views/h` is views divided by the video length, so short videos naturally show a
+huge rate; it shows `n/a` when a length is unknown. IDs that do not exist are
+listed below the table.
+
 ### Output files
 
 Statistics are refreshed and written to the `txt/` folder next to the current working directory:
@@ -255,11 +312,11 @@ python src/YST.py -channel_id=UCifZaTQPiHE2QRgEwDNfhug -video_id=C7REVNM_EWY -lo
 .
 ├── src/                  # application source
 │   ├── YST.py            # entry point
-│   └── YST_lib/          # arguments parsing, ASCII banner, main loop
+│   └── YST_lib/          # parsing, banner, history, dashboard, compare, export
 ├── assets/               # screenshots and support badges used by this README
 ├── build/YST.spec        # PyInstaller recipe for the Windows executable
 ├── scripts/run.bat       # Windows launcher
-├── tests/                # pytest suite for parsing, history, dashboard, export
+├── tests/                # pytest suite
 ├── tools/check_args.py   # small helper for inspecting CLI arguments
 └── dist/                 # released executables
 ```
@@ -272,7 +329,8 @@ python -m pytest
 ```
 
 Generated at runtime and ignored by git: `txt/` (latest values), `data/`
-(history database), `exports/` (CSV and JSON exports).
+(history database), `exports/` (CSV and JSON exports). `.env.example` shows the
+recognised settings.
 
 To rebuild the Windows executable:
 
@@ -294,16 +352,19 @@ Done in this repository:
 - [x] Local history of every snapshot with growth deltas
 - [x] Dashboard with 24h summary, per-hour rates and sparkline
 - [x] CSV and JSON export
+- [x] Video comparison with like, comment and views-per-hour ratios
+- [x] Publication date and video length
+- [x] Sub-commands (`video`, `channel`, `latest`, `monitor`, `compare`, `export`) next to the flags
+- [x] `.env` configuration and messages for invalid keys, spent quota and rate limits
 - [x] pytest suite and a CI workflow building the Windows executable
 - [x] Linux and macOS support through the source install
 
 Planned:
 
-- [ ] Sub-commands (`video`, `channel`, `latest`, `monitor`, `compare`, `export`) next to the flags
-- [ ] Video comparison with like, comment and views-per-hour ratios
-- [ ] Publication date and video length, plus subscriber status
+- [ ] Subscriber status and membership counts, if YouTube opens them up again
 - [ ] Signed releases and binaries for Linux and macOS
-- [ ] Config file (`.env`) and a friendlier message when the API key is invalid or the quota is spent
+- [ ] Charts in the terminal over a longer window, and an HTML report
+- [ ] Channel-level comparison and a watchlist of several channels
 - ~~Support for more texts (Members, Subscribers Status, etc.)~~ — *YouTube removed them from the public API*
 
 ## 💖 Support this project

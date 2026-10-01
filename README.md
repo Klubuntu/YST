@@ -27,8 +27,8 @@ The tool is also shipped as a Windows executable, so Python is not required to u
 
 - **Python 3.8+** – [download](https://www.python.org/downloads/release/python-3810/)
   — or use the compiled Windows build below.
-- **`requests`** – installed automatically with `pip install -r requirements.txt`; when
-  building the executable, PyInstaller bundles it.
+- **`requests`** – YouTube Data API calls.
+- **`colorama`** – ANSI colors, including native support in the classic Command Prompt.
 - **A YouTube Data API key** – stored in `src/YST_lib/required.py` (`API_KEY`).
 - **Windows only** – for the pre-built `.exe` release.
 
@@ -106,7 +106,8 @@ python src\YST.py -channel_id=UClFN9LShD_Pv0wnSeUKbUZw -video_id=FJDVKeh7RJI -sl
 
 ![Command-line result](assets/screenshots/cli-result.png)
 
-> Colors are not rendered in the classic Command Prompt — use Windows Terminal, or the EXE build.
+> Output is colored through `colorama`, so colors now render in the classic Command Prompt too.
+> When stdout is not a terminal (e.g. piped to a file), escape codes are stripped automatically.
 
 ### Output files
 
@@ -136,8 +137,7 @@ scripts\run.bat
 .
 ├── src/                  # application source
 │   ├── YST.py            # entry point
-│   ├── YST_lib/          # arguments parsing, configuration, main loop
-│   └── lib/              # shared helpers (terminal colors)
+│   └── YST_lib/          # arguments parsing, configuration, main loop
 ├── assets/               # screenshots and support badges used by this README
 ├── build/YST.spec        # PyInstaller recipe for the Windows executable
 ├── scripts/run.bat       # Windows launcher

@@ -1,5 +1,8 @@
 import sys
 from time import localtime, sleep, strftime
+
+from colorama import Fore, Style
+
 from YST_lib.required import *
 from YST_lib.arguments import *
 
@@ -11,7 +14,7 @@ def main():
     def date():
         t = localtime()
         current_time = strftime("(%d-%m-%Y) - %H:%M:%S", t)
-        print(f"{bcolors.REMBOLD}{current_time}")
+        print(f"{Style.NORMAL}{current_time}")
 
     def get_latest_eventid(channel_id):
         query = f"https://www.googleapis.com/youtube/v3/search?part=snippet&channelId={channel_id}&maxResults=1&type=video&order=date&key={API_KEY}"
@@ -40,7 +43,7 @@ def main():
             f.close()
         except KeyError as e:
             print(e)
-            print(f"{bcolors.FAIL}Invalid URL or Channel ID{bcolors.DEFAULT}")
+            print(f"{Fore.LIGHTRED_EX}Invalid URL or Channel ID{Style.RESET_ALL}")
             sys.exit(sep)
 
     def request_video(video_id):
@@ -63,17 +66,17 @@ def main():
             f.close()
         except IndexError as e:
             # print(e)
-            print(f"{bcolors.FAIL}Invalid URL or Video ID{bcolors.DEFAULT}")
+            print(f"{Fore.LIGHTRED_EX}Invalid URL or Video ID{Style.RESET_ALL}")
             sys.exit(sep)
     def test():
         print(1)
     def result():
-        print(f"{bcolors.DEFAULT}{bcolors.LIGHTGREEN}Subscribers: {subs}")
-        print(f"{bcolors.OKCYAN}Channel Views: {viewCount}")
-        print(f"{bcolors.OKBLUE}Channel Videos: {videoCount}")
-        print(f"{bcolors.HEADER}Video Likes: {likes}")
-        print(f"{bcolors.FAIL}Video Comments: {comments}")
-        print(f"{bcolors.WARNING}Video Views: {views}{bcolors.DEFAULT}")
+        print(f"{Style.RESET_ALL}{Fore.LIGHTGREEN_EX}Subscribers: {subs}")
+        print(f"{Fore.LIGHTCYAN_EX}Channel Views: {viewCount}")
+        print(f"{Fore.LIGHTBLUE_EX}Channel Videos: {videoCount}")
+        print(f"{Fore.MAGENTA}Video Likes: {likes}")
+        print(f"{Fore.LIGHTRED_EX}Video Comments: {comments}")
+        print(f"{Fore.LIGHTYELLOW_EX}Video Views: {views}{Style.RESET_ALL}")
         print("")
     try:
         if (arguments2.get('channel_id')):
@@ -93,7 +96,7 @@ def main():
             while(True):
                 request_channel(channel_id)
                 request_video(video_id)
-                print(f'{bcolors.WARNING}{progress}', end='\r')
+                print(f'{Fore.LIGHTYELLOW_EX}{progress}', end='\r')
                 progress = progress + "-"
                 if (progress == "------------------------------------------------------------"):
                     progress = "-"
@@ -110,7 +113,7 @@ def main():
 
     except KeyboardInterrupt:
         print(
-            f"{bcolors.FAIL}                          User Exit                {bcolors.DEFAULT}")
+            f"{Fore.LIGHTRED_EX}                          User Exit                {Style.RESET_ALL}")
 
 
 if __name__ == '__main__':

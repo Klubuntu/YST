@@ -2,8 +2,11 @@ import requests
 import json
 import sys
 import os
+from colorama import Fore, Style, init as init_colors
+
 sys.path.append("..")
-from lib.bcolors import *
+
+init_colors()
 
 sep = "======================================================================"
 soft_dir = os.getcwd() + "//txt"

@@ -1,5 +1,8 @@
 import sys
 import copy
+
+from colorama import Fore, Style
+
 from YST_lib.required import *
 
 def check_arg():
@@ -33,7 +36,7 @@ if arguments:
             pass
 
     if not used_channelID:
-        channel_query = input(f"{bcolors.BOLD}Paste Your Channel ID or Youtube Link > ")
+        channel_query = input(f"{Style.BRIGHT}Paste Your Channel ID or Youtube Link > ")
         if len(channel_query) > 1:
             if "youtube.com/channel/" not in channel_query:
                 arguments2['channel_id'] = channel_query
@@ -41,14 +44,14 @@ if arguments:
                 arguments2['channel_id'] = channel_query.split("channel/")[1]
             used_channelID = True
         else:
-            sys.exit(f"{bcolors.FAIL}No Found Channel ID or Youtube Link{bcolors.DEFAULT}")
+            sys.exit(f"{Fore.LIGHTRED_EX}No Found Channel ID or Youtube Link{Style.RESET_ALL}")
 
 
     if 'latest_video' in arguments:
         used_videoID = True
 
     if not used_videoID:
-        video_query = input(f"{bcolors.BOLD}Paste Your Video ID or Youtube Link > ")
+        video_query = input(f"{Style.BRIGHT}Paste Your Video ID or Youtube Link > ")
         if len(video_query) > 1:
             if "?v=" not in video_query:
                 arguments2['video_id'] = video_query
@@ -56,5 +59,5 @@ if arguments:
                 arguments2['video_id'] = video_query.split("?v=")[1]
             used_videoID = True
         else:
-            sys.exit(f"{bcolors.FAIL}No Found Video ID or Youtube Link{bcolors.DEFAULT}")
+            sys.exit(f"{Fore.LIGHTRED_EX}No Found Video ID or Youtube Link{Style.RESET_ALL}")
        

@@ -6,7 +6,7 @@ import requests
 from colorama import Fore, Style
 
 from YST_lib.arguments import STAT_FILES, options
-from YST_lib.cli import parse_duration, parse_published_at
+from YST_lib.cli import api_error_message, parse_duration, parse_published_at
 from YST_lib.banner import print_banner
 from YST_lib.compare import build_rows, print_table
 from YST_lib.dashboard import ROW_ORDER, print_deltas, print_details, print_summary
@@ -44,11 +44,19 @@ def write_stats(values):
 def fetch_statistics(url):
     try:
         response = requests.get(url, timeout=REQUEST_TIMEOUT)
-        response.raise_for_status()
-        return response.json()
-    except (requests.RequestException, ValueError) as e:
-        print(f"{Fore.LIGHTRED_EX}Request failed: {e}{Style.RESET_ALL}")
+    except requests.RequestException as e:
+        print(f"{Fore.LIGHTRED_EX}Network error: {e}{Style.RESET_ALL}")
         sys.exit(1)
+
+    try:
+        payload = response.json()
+    except ValueError:
+        payload = {}
+
+    if not response.ok:
+        print(f"{Fore.LIGHTRED_EX}{api_error_message(response, payload)}{Style.RESET_ALL}")
+        sys.exit(1)
+    return payload
 
 
 def get_latest_video_id(channel_id):

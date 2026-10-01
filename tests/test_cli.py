@@ -110,3 +110,84 @@ def test_flags_still_work_without_subcommand():
         "channel_id": "UCabc",
         "video_id": "abc",
     }
+
+
+def test_load_env_file_reads_pairs(tmp_path):
+    from YST_lib.required import load_env_file
+
+    env = tmp_path / ".env"
+    env.write_text("# comment\nYOUTUBE_API_KEY=abc123\nOTHER='quoted'\nbroken\n\nEMPTY=\n")
+    loaded = load_env_file(str(env))
+    assert loaded == {"YOUTUBE_API_KEY": "abc123", "OTHER": "quoted", "EMPTY": ""}
+
+
+def test_load_env_file_without_file(tmp_path):
+    from YST_lib.required import load_env_file
+
+    assert load_env_file(str(tmp_path / "missing.env")) == {}
+
+
+def test_api_error_message_for_known_reason():
+    from YST_lib.cli import api_error_message
+
+    class Response:
+        status_code = 403
+        ok = False
+
+    payload = {"error": {"errors": [{"reason": "quotaExceeded"}]}}
+    assert "quota" in api_error_message(Response(), payload).lower()
+
+
+def test_api_error_message_for_unknown_status():
+    from YST_lib.cli import api_error_message
+
+    class Response:
+        status_code = 500
+        ok = False
+
+    assert "500" in api_error_message(Response(), {})
+
+
+def test_api_error_message_detects_invalid_key_by_message():
+    from YST_lib.cli import api_error_message
+
+    class Response:
+        status_code = 400
+        ok = False
+
+    payload = {
+        "error": {
+            "code": 400,
+            "message": "API key not valid. Please pass a valid API key.",
+            "errors": [{"reason": "badRequest", "domain": "global"}],
+            "status": "INVALID_ARGUMENT",
+        }
+    }
+    assert "API key is invalid" in api_error_message(Response(), payload)
+
+
+def test_api_error_message_reads_error_info_details():
+    from YST_lib.cli import api_error_message
+
+    class Response:
+        status_code = 400
+        ok = False
+
+    payload = {
+        "error": {
+            "errors": [{"reason": "badRequest"}],
+            "details": [{"@type": "ErrorInfo", "reason": "API_KEY_INVALID"}],
+        }
+    }
+    assert "API key is invalid" in api_error_message(Response(), payload)
+
+
+def test_api_error_message_falls_back_to_api_message():
+    from YST_lib.cli import api_error_message
+
+    class Response:
+        status_code = 418
+        ok = False
+
+    payload = {"error": {"errors": [{"reason": "teapot"}], "message": "I am a teapot"}}
+    assert api_error_message(Response(), payload) == "I am a teapot"

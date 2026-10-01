@@ -31,6 +31,56 @@ STAT_ALIASES = {
 }
 
 
+API_ERRORS = {
+    "keyInvalid": "The API key is invalid. Set YOUTUBE_API_KEY in .env or your environment.",
+    "quotaExceeded": "The daily API quota is spent. Try again after midnight UTC.",
+    "dailyLimitExceeded": "The daily API quota is spent. Try again after midnight UTC.",
+    "forbidden": "The API key is not allowed to use this resource.",
+    "accessNotConfigured": "The YouTube Data API is not enabled for this key.",
+    "rateLimitExceeded": "Too many requests, slowing down. Raise -sleep_time.",
+}
+
+
+def _error_details(payload):
+    error = (payload.get("error") or {}) if isinstance(payload, dict) else {}
+    reasons = []
+    for item in error.get("errors") or []:
+        if isinstance(item, dict) and item.get("reason"):
+            reasons.append(item["reason"])
+    for detail in error.get("details") or []:
+        if isinstance(detail, dict) and detail.get("reason"):
+            reasons.append(detail["reason"])
+    if error.get("status"):
+        reasons.append(error["status"])
+    return reasons, error.get("message") or ""
+
+
+def api_error_message(response, payload):
+    reasons, message = _error_details(payload)
+
+    haystack = " ".join(reasons + [message]).lower()
+    if "key_invalid" in haystack or "api key not valid" in haystack or "apikey" in haystack:
+        return API_ERRORS["keyInvalid"]
+    if "quota" in haystack:
+        return API_ERRORS["quotaExceeded"]
+    if "rate limit" in haystack or "ratelimit" in haystack:
+        return API_ERRORS["rateLimitExceeded"]
+    if "accessnotconfigured" in haystack.replace("_", ""):
+        return API_ERRORS["accessNotConfigured"]
+
+    for reason in reasons:
+        if reason in API_ERRORS:
+            return API_ERRORS[reason]
+
+    if response.status_code == 403:
+        return "Access denied. Check the API key and its quota."
+    if response.status_code == 404:
+        return "Not found. Check the channel or video ID."
+    if message:
+        return message
+    return f"Request failed with HTTP {response.status_code}."
+
+
 def parse_bool(value, default):
     if value is None:
         return default

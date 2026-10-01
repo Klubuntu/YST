@@ -7,7 +7,8 @@ from colorama import Fore, Style
 
 from YST_lib.arguments import STAT_FILES, options
 from YST_lib.banner import print_banner
-from YST_lib.history import connect, record
+from YST_lib.dashboard import ROW_ORDER, print_deltas, print_summary
+from YST_lib.history import changes, connect, delta, latest, record, series
 from YST_lib.required import (
     API_KEY,
     API_URL,
@@ -91,19 +92,14 @@ def request_video(video_id):
     return values
 
 
-def result(values):
-    rows = (
-        ("subs", "Subscribers", Fore.LIGHTGREEN_EX),
-        ("channel_views", "Channel Views", Fore.LIGHTCYAN_EX),
-        ("channel_videos", "Channel Videos", Fore.LIGHTBLUE_EX),
-        ("video_likes", "Video Likes", Fore.MAGENTA),
-        ("video_comments", "Video Comments", Fore.LIGHTRED_EX),
-        ("video_views", "Video Views", Fore.LIGHTYELLOW_EX),
-    )
-    for key, label, color in rows:
-        if key in options["log_selection"]:
-            print(f"{color}{label}: {values.get(key, 0)}{Style.RESET_ALL}")
-    print("")
+def show(database, channel_id, video_id, values, previous):
+    print_deltas(values, delta(previous, values), options["log_selection"])
+    if not options["dashboard"]:
+        return
+    hours = options["history_hours"]
+    summary = changes(database, channel_id, video_id, hours)
+    samples = {key: series(database, channel_id, key, video_id, hours) for key in ROW_ORDER}
+    print_summary(summary, hours, samples)
 
 
 def collect(channel_id, video_id):
@@ -111,11 +107,12 @@ def collect(channel_id, video_id):
 
 
 def take_snapshot(database, channel_id, video_id, values, last_snapshot):
+    previous = latest(database, channel_id, video_id)
     now = int(time())
-    if last_snapshot is not None and now - last_snapshot < options["snapshot_time"]:
-        return last_snapshot
-    record(database, channel_id, video_id, values)
-    return now
+    if last_snapshot is None or now - last_snapshot >= options["snapshot_time"]:
+        record(database, channel_id, video_id, values)
+        return now, previous
+    return last_snapshot, previous
 
 
 def main():
@@ -142,21 +139,22 @@ def main():
             sys.exit(1)
 
         last_snapshot = None
-        if options["log_mode"]:
+        verbose = options["log_mode"] or options["dashboard"]
+        if verbose:
             while True:
                 date()
                 values = collect(channel_id, video_id)
-                last_snapshot = take_snapshot(
+                last_snapshot, previous = take_snapshot(
                     database, channel_id, video_id, values, last_snapshot
                 )
-                result(values)
+                show(database, channel_id, video_id, values, previous)
                 sleep(options["sleep_time"])
         else:
             progress = "-"
             print(f"Start Logging to Folder {soft_dir}")
             while True:
                 values = collect(channel_id, video_id)
-                last_snapshot = take_snapshot(
+                last_snapshot, previous = take_snapshot(
                     database, channel_id, video_id, values, last_snapshot
                 )
                 print(f"{Fore.LIGHTYELLOW_EX}{progress}", end="\r")

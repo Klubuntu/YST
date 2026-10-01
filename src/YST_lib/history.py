@@ -93,6 +93,15 @@ def changes(connection, channel_id, video_id=None, hours=24):
     }
 
 
+def delta(previous, values):
+    if not previous:
+        return {}
+    return {
+        key: int(values.get(key, 0) or 0) - int(previous.get(key, 0) or 0)
+        for key in METRIC_KEYS
+    }
+
+
 def count(connection, channel_id=None):
     if channel_id:
         row = connection.execute(

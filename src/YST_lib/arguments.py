@@ -43,6 +43,8 @@ list_logs = parse_bool(arguments.get("list_logs"), False)
 log_selection = resolve_log_selection(arguments.get("enable_log"), arguments.get("disable_log"))
 history_path = arguments.get("db") or DEFAULT_DB_PATH
 snapshot_time = parse_int(arguments.get("snapshot_time"), 60, "snapshot_time")
+history_hours = parse_int(arguments.get("history"), 24, "history")
+dashboard_mode = parse_bool(arguments.get("dashboard"), False)
 
 if list_logs:
     print_available_metrics()
@@ -66,4 +68,6 @@ options = {
     "log_selection": log_selection,
     "history_path": history_path,
     "snapshot_time": snapshot_time,
+    "history_hours": history_hours,
+    "dashboard": dashboard_mode,
 }

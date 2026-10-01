@@ -34,6 +34,7 @@ VIDEO_COLUMNS = {
     "video_title": "TEXT",
     "video_duration": "INTEGER",
     "video_published_at": "INTEGER",
+    "subs_hidden": "INTEGER DEFAULT 0",
 }
 
 EXTRA_COLUMNS = ", ".join(VIDEO_COLUMNS)
@@ -66,6 +67,7 @@ def record(connection, channel_id, video_id, values, meta=None):
         meta.get("video_title"),
         meta.get("video_duration"),
         meta.get("video_published_at"),
+        int(bool(meta.get("subs_hidden", False))),
     ]
     placeholders = ", ".join("?" * (3 + len(METRIC_KEYS) + len(VIDEO_COLUMNS)))
     connection.execute(

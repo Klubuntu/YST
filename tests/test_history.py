@@ -181,3 +181,13 @@ def test_record_stores_video_meta(database):
     assert row["video_title"] == "Title"
     assert row["video_duration"] == 3723
     assert row["video_published_at"] == 1674993600
+
+
+def test_record_stores_hidden_subscribers(database):
+    record(database, "UCtest", "abc123", make_values(), {"subs_hidden": True})
+    assert latest(database, "UCtest", "abc123")["subs_hidden"] == 1
+
+
+def test_record_defaults_hidden_subscribers_to_zero(database):
+    record(database, "UCtest", "abc123", make_values())
+    assert latest(database, "UCtest", "abc123")["subs_hidden"] == 0

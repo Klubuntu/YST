@@ -77,13 +77,16 @@ def request_channel(channel_id):
         print(f"{Fore.LIGHTRED_EX}Invalid URL or Channel ID{Style.RESET_ALL}")
         sys.exit(1)
 
+    hidden = bool(statistics.get("hiddenSubscriberCount", False))
     values = {
         "subs": statistics.get("subscriberCount", 0),
         "channel_videos": statistics.get("videoCount", 0),
         "channel_views": statistics.get("viewCount", 0),
     }
+    if hidden:
+        values["subs"] = 0
     write_stats(values)
-    return values
+    return values, {"subs_hidden": hidden, "subs_visible": not hidden}
 
 
 def request_video(video_id):
@@ -111,7 +114,12 @@ def request_video(video_id):
 
 
 def show(database, channel_id, video_id, values, meta, previous):
-    print_deltas(values, delta(previous, values), options["log_selection"])
+    print_deltas(
+        values,
+        delta(previous, values),
+        options["log_selection"],
+        hidden=meta.get("subs_hidden", False),
+    )
     print_details(meta)
     if not options["dashboard"]:
         return
@@ -122,16 +130,16 @@ def show(database, channel_id, video_id, values, meta, previous):
 
 
 def collect(channel_id, video_id):
-    channel = request_channel(channel_id)
+    channel, channel_meta = request_channel(channel_id)
     video, meta = request_video(video_id)
-    return {**channel, **video}, meta
+    return {**channel, **video}, {**channel_meta, **meta}
 
 
 def take_snapshot(database, channel_id, video_id, values, meta, last_snapshot):
     previous = latest(database, channel_id, video_id)
     now = int(time())
     if last_snapshot is None or now - last_snapshot >= options["snapshot_time"]:
-        record(database, channel_id, video_id, values, meta)
+        record(database, channel_id, video_id, values, {**meta, "subs_hidden": int(meta.get("subs_hidden", False))})
         return now, previous
     return last_snapshot, previous
 

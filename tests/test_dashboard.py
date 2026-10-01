@@ -89,3 +89,16 @@ def test_format_summary_reports_change_and_rate():
     assert any("Last 6h" in line for line in lines)
     assert any("(+5/h)" in line for line in lines)
     assert any("trend" in line for line in lines)
+
+def test_format_deltas_marks_hidden_subscribers():
+    lines = format_deltas(values(), {}, None, hidden=True)
+    assert any("hidden by the channel" in line for line in lines)
+
+
+def test_summary_notes_missing_member_metrics():
+    changes = {
+        key: {"current": 10, "previous": 0, "change": 10, "per_hour": 5.0}
+        for key in METRIC_KEYS
+    }
+    lines = format_summary(changes, 24, {})
+    assert any("YouTube Data API v3" in line for line in lines)

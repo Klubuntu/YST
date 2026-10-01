@@ -69,14 +69,19 @@ def downsample(values, width):
     return sampled
 
 
-def format_deltas(values, delta, selected=None):
+def format_deltas(values, delta, selected=None, hidden=False):
     lines = []
     for key in ROW_ORDER:
         if key not in values:
             continue
         if selected is not None and key not in selected:
             continue
-        line = f"{METRIC_COLORS.get(key, '')}{METRIC_LABELS.get(key, key)}: {format_number(values[key])}"
+        color = METRIC_COLORS.get(key, "")
+        label = METRIC_LABELS.get(key, key)
+        if key == "subs" and hidden:
+            lines.append(f"{color}{label}: hidden by the channel{Style.RESET_ALL}")
+            continue
+        line = f"{color}{label}: {format_number(values[key])}"
         if delta and key in delta:
             line += f" {Style.DIM}({format_change(delta[key])}){Style.RESET_ALL}"
         lines.append(f"{line}{Style.RESET_ALL}")
@@ -105,6 +110,7 @@ def format_summary(changes, hours, samples, spark_key="video_views"):
             f"{METRIC_COLORS.get(spark_key, '')}{METRIC_LABELS.get(spark_key, spark_key)} trend:"
             f"{Style.RESET_ALL} {trend}"
         )
+    lines.append(f"{Style.DIM}Member and subscriber status are not exposed by the YouTube Data API v3{Style.RESET_ALL}")
     return lines
 
 
@@ -122,8 +128,8 @@ def format_details(meta, stamp=None):
     return lines
 
 
-def print_deltas(values, delta, selected=None):
-    for line in format_deltas(values, delta, selected):
+def print_deltas(values, delta, selected=None, hidden=False):
+    for line in format_deltas(values, delta, selected, hidden):
         print(line)
     print("")
 

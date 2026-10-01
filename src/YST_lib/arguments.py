@@ -12,7 +12,14 @@ from YST_lib.cli import (
     parse_int,
     resolve_log_selection,
 )
-from YST_lib.required import DEFAULT_DB_PATH, get_latest_video, logmode, sleep_time
+from YST_lib.required import (
+    DEFAULT_DB_PATH,
+    EXPORT_FOLDER,
+    EXPORT_FORMATS,
+    get_latest_video,
+    logmode,
+    sleep_time,
+)
 
 
 def prompt(label, message):
@@ -33,6 +40,18 @@ def print_available_metrics():
         print(f"  {Fore.YELLOW}{metric_key:<16}{Style.RESET_ALL} -> {metric_file}")
 
 
+def parse_choice(value, choices, default):
+    if value is None:
+        return default
+    normalized = value.strip().lower()
+    if normalized not in choices:
+        sys.exit(
+            f"{Fore.LIGHTRED_EX}Invalid value '{value}'.{Style.RESET_ALL}\n"
+            f"{Style.BRIGHT}Available: {Fore.YELLOW}{', '.join(sorted(choices))}{Style.RESET_ALL}"
+        )
+    return normalized
+
+
 arguments = check_arg()
 arguments2 = copy.copy(arguments)
 
@@ -45,6 +64,8 @@ history_path = arguments.get("db") or DEFAULT_DB_PATH
 snapshot_time = parse_int(arguments.get("snapshot_time"), 60, "snapshot_time")
 history_hours = parse_int(arguments.get("history"), 24, "history")
 dashboard_mode = parse_bool(arguments.get("dashboard"), False)
+export_format = parse_choice(arguments.get("export"), EXPORT_FORMATS, None)
+export_path = arguments.get("export_path") or EXPORT_FOLDER
 
 if list_logs:
     print_available_metrics()
@@ -52,7 +73,7 @@ if list_logs:
 
 if not arguments2.get("channel_id"):
     arguments2["channel_id"] = prompt("Channel", "Paste Your Channel ID or Youtube Link > ")
-if not latest_video and not arguments2.get("video_id"):
+if not latest_video and not export_format and not arguments2.get("video_id"):
     arguments2["video_id"] = prompt("Video", "Paste Your Video ID or Youtube Link > ")
 
 arguments2["channel_id"] = extract_channel_id(arguments2["channel_id"])
@@ -70,4 +91,6 @@ options = {
     "snapshot_time": snapshot_time,
     "history_hours": history_hours,
     "dashboard": dashboard_mode,
+    "export_format": export_format,
+    "export_path": export_path,
 }

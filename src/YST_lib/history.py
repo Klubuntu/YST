@@ -62,11 +62,18 @@ def latest(connection, channel_id, video_id=None):
 
 def window(connection, channel_id, video_id=None, hours=24, limit=1000):
     since = int(time.time()) - int(hours * 3600)
-    query = (
-        "SELECT * FROM snapshots WHERE channel_id = ? AND video_id = ? AND recorded_at >= ? "
-        "ORDER BY recorded_at ASC, id ASC LIMIT ?"
-    )
-    rows = connection.execute(query, (channel_id, video_id or "", since, limit)).fetchall()
+    if video_id is None:
+        query = (
+            "SELECT * FROM snapshots WHERE channel_id = ? AND recorded_at >= ? "
+            "ORDER BY recorded_at ASC, id ASC LIMIT ?"
+        )
+        rows = connection.execute(query, (channel_id, since, limit)).fetchall()
+    else:
+        query = (
+            "SELECT * FROM snapshots WHERE channel_id = ? AND video_id = ? AND recorded_at >= ? "
+            "ORDER BY recorded_at ASC, id ASC LIMIT ?"
+        )
+        rows = connection.execute(query, (channel_id, video_id, since, limit)).fetchall()
     return [dict(row) for row in rows]
 
 

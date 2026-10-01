@@ -8,6 +8,7 @@ from colorama import Fore, Style
 from YST_lib.arguments import STAT_FILES, options
 from YST_lib.banner import print_banner
 from YST_lib.dashboard import ROW_ORDER, print_deltas, print_summary
+from YST_lib.exporter import save
 from YST_lib.history import changes, connect, delta, latest, record, series
 from YST_lib.required import (
     API_KEY,
@@ -115,6 +116,22 @@ def take_snapshot(database, channel_id, video_id, values, last_snapshot):
     return last_snapshot, previous
 
 
+def export_history(database, channel_id, video_id):
+    export_format = options["export_format"]
+    stamp = strftime("%Y%m%d-%H%M%S", localtime())
+    target = save(
+        database,
+        export_format,
+        channel_id,
+        video_id,
+        options["history_hours"],
+        options["export_path"],
+        stamp,
+    )
+    print(f"{Style.BRIGHT}Exported {export_format.upper()} to {Fore.YELLOW}{target}{Style.RESET_ALL}")
+    return target
+
+
 def main():
     print_banner()
     print("")
@@ -130,6 +147,10 @@ def main():
         print(f"{Style.BRIGHT}Logged metrics: {Fore.YELLOW}{', '.join(sorted(selection))}{Style.RESET_ALL}")
 
     database = connect(options["history_path"])
+
+    if options["export_format"]:
+        export_history(database, channel_id, video_id)
+        return
 
     try:
         if options["latest_video"]:

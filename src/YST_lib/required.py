@@ -17,8 +17,10 @@ sleep_time = 2
 logmode = False
 get_latest_video = False
 
-# history storage
+# history storage and export
 DEFAULT_DB_PATH = "data/yst.db"
+EXPORT_FOLDER = "exports"
+EXPORT_FORMATS = ("csv", "json")
 
 
 def ensure_output_dir():

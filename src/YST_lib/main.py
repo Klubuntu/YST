@@ -8,6 +8,7 @@ from colorama import Fore, Style
 from YST_lib.arguments import STAT_FILES, options
 from YST_lib.cli import parse_duration, parse_published_at
 from YST_lib.banner import print_banner
+from YST_lib.compare import build_rows, print_table
 from YST_lib.dashboard import ROW_ORDER, print_deltas, print_details, print_summary
 from YST_lib.exporter import save
 from YST_lib.history import changes, connect, delta, latest, record, series
@@ -127,6 +128,44 @@ def take_snapshot(database, channel_id, video_id, values, meta, last_snapshot):
     return last_snapshot, previous
 
 
+def fetch_videos(video_ids):
+    joined = ",".join(video_ids)
+    query = f"{API_URL}/videos?part=snippet,contentDetails,statistics&id={joined}&key={API_KEY}"
+    try:
+        items = fetch_statistics(query)["items"]
+    except (KeyError, IndexError, TypeError):
+        print(f"{Fore.LIGHTRED_EX}No videos found for the given IDs{Style.RESET_ALL}")
+        sys.exit(1)
+
+    videos = []
+    for item in items:
+        statistics = item.get("statistics", {})
+        details = item.get("contentDetails", {})
+        snippet = item.get("snippet", {})
+        videos.append(
+            {
+                "video_id": item.get("id", ""),
+                "video_title": snippet.get("title"),
+                "video_duration": parse_duration(details.get("duration")),
+                "video_views": int(statistics.get("viewCount", 0) or 0),
+                "video_likes": int(statistics.get("likeCount", 0) or 0),
+                "video_comments": int(statistics.get("commentCount", 0) or 0),
+            }
+        )
+    return videos
+
+
+def compare_videos(video_ids):
+    videos = fetch_videos(video_ids)
+    print_table(build_rows(videos))
+    found = {video["video_id"] for video in videos}
+    missing = [video_id for video_id in video_ids if video_id not in found]
+    if missing:
+        print(
+            f"{Style.DIM}Not found: {', '.join(missing)}{Style.RESET_ALL}\n"
+        )
+
+
 def export_history(database, channel_id, video_id):
     export_format = options["export_format"]
     stamp = strftime("%Y%m%d-%H%M%S", localtime())
@@ -156,6 +195,10 @@ def main():
     selection = options["log_selection"]
     if selection != set(STAT_FILES):
         print(f"{Style.BRIGHT}Logged metrics: {Fore.YELLOW}{', '.join(sorted(selection))}{Style.RESET_ALL}")
+
+    if options["compare"]:
+        compare_videos(options["compare"])
+        return
 
     database = connect(options["history_path"])
 

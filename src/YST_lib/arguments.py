@@ -1,4 +1,5 @@
 import copy
+import re
 import sys
 
 from colorama import Fore, Style
@@ -40,6 +41,17 @@ def print_available_metrics():
         print(f"  {Fore.YELLOW}{metric_key:<16}{Style.RESET_ALL} -> {metric_file}")
 
 
+def parse_id_list(value):
+    if not value:
+        return []
+    ids = [extract_video_id(name) for name in re.split(r"[,\s]+", value) if name]
+    seen = []
+    for video_id in ids:
+        if video_id not in seen:
+            seen.append(video_id)
+    return seen
+
+
 def parse_choice(value, choices, default):
     if value is None:
         return default
@@ -66,22 +78,25 @@ history_hours = parse_int(arguments.get("history"), 24, "history")
 dashboard_mode = parse_bool(arguments.get("dashboard"), False)
 export_format = parse_choice(arguments.get("export"), EXPORT_FORMATS, None)
 export_path = arguments.get("export_path") or EXPORT_FOLDER
+compare_ids = parse_id_list(arguments.get("compare"))
 
 if list_logs:
     print_available_metrics()
     sys.exit(0)
 
-if not arguments2.get("channel_id"):
+if not compare_ids and not arguments2.get("channel_id"):
     arguments2["channel_id"] = prompt("Channel", "Paste Your Channel ID or Youtube Link > ")
-if not latest_video and not export_format and not arguments2.get("video_id"):
+if not latest_video and not export_format and not compare_ids and not arguments2.get("video_id"):
     arguments2["video_id"] = prompt("Video", "Paste Your Video ID or Youtube Link > ")
 
-arguments2["channel_id"] = extract_channel_id(arguments2["channel_id"])
+if arguments2.get("channel_id"):
+    arguments2["channel_id"] = extract_channel_id(arguments2["channel_id"])
 if arguments2.get("video_id"):
     arguments2["video_id"] = extract_video_id(arguments2["video_id"])
 
 options = {
-    "channel_id": arguments2["channel_id"],
+    "channel_id": arguments2.get("channel_id"),
+    "compare": compare_ids,
     "video_id": arguments2.get("video_id"),
     "sleep_time": sleep_time,
     "log_mode": log_mode,

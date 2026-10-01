@@ -82,6 +82,7 @@ snapshot_time = parse_int(arguments.get("snapshot_time"), 60, "snapshot_time")
 history_hours = parse_int(arguments.get("history"), 24, "history")
 dashboard_mode = parse_bool(arguments.get("dashboard"), False)
 chart_mode = parse_bool(arguments.get("chart"), False)
+report_mode = parse_bool(arguments.get("report"), False)
 export_format = parse_choice(arguments.get("export"), EXPORT_FORMATS, None)
 export_path = arguments.get("export_path") or EXPORT_FOLDER
 compare_ids = parse_id_list(arguments.get("compare"))
@@ -113,6 +114,7 @@ options = {
     "history_hours": history_hours,
     "dashboard": dashboard_mode,
     "chart": chart_mode,
+    "report": report_mode,
     "export_format": export_format,
     "export_path": export_path,
 }

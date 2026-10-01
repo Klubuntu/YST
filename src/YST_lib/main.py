@@ -11,7 +11,8 @@ from YST_lib.banner import print_banner
 from YST_lib.compare import build_rows, print_table
 from YST_lib.dashboard import ROW_ORDER, print_deltas, print_details, print_summary
 from YST_lib.exporter import save
-from YST_lib.history import changes, connect, delta, latest, record, series
+from YST_lib.report import CHART_KEYS, render_report, save_report
+from YST_lib.history import changes, connect, delta, latest, record, series, window
 from YST_lib.required import (
     API_KEY,
     API_URL,
@@ -198,6 +199,19 @@ def export_history(database, channel_id, video_id):
     return target
 
 
+def write_report(database, channel_id, video_id):
+    hours = options["history_hours"]
+    rows = window(database, channel_id, video_id or None, hours)
+    samples = {
+        key: series(database, channel_id, key, video_id or None, hours) for key in CHART_KEYS
+    }
+    stamp = strftime("%Y%m%d-%H%M%S", localtime())
+    content = render_report(rows, samples, channel_id, video_id, hours)
+    target = save_report(content, options["export_path"], f"{channel_id}_{stamp}.html")
+    print(f"{Style.BRIGHT}Report written to {Fore.YELLOW}{target}{Style.RESET_ALL}")
+    return target
+
+
 def main():
     print_banner()
     print("")
@@ -217,6 +231,10 @@ def main():
         return
 
     database = connect(options["history_path"])
+
+    if options["report"]:
+        write_report(database, channel_id, video_id)
+        return
 
     if options["export_format"]:
         export_history(database, channel_id, video_id)

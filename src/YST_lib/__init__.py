@@ -1,0 +1,1 @@
+"""YouTube Stats Tool (YST) - core package."""

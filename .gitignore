@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# runtime output (see src/YST_lib/required.py)
+txt/
+
+# PyInstaller intermediate files (final binaries stay in dist/)
+build/*.exe
+build/bundle/

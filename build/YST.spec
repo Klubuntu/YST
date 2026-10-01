@@ -1,11 +1,14 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+import os
+
+SRC = os.path.join(SPECPATH, os.pardir, "src")
 
 block_cipher = None
 
 
-a = Analysis(['YST.py'],
-             pathex=[],
+a = Analysis([os.path.join(SRC, 'YST.py')],
+             pathex=[SRC],
              binaries=[],
              datas=[],
              hiddenimports=[],

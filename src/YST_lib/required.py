@@ -1,7 +1,6 @@
 import os
 import sys
 
-import requests
 from colorama import Fore, Style, init as init_colors
 
 init_colors()
@@ -17,8 +16,6 @@ API_KEY = os.environ.get("YOUTUBE_API_KEY", "AIzaSyBGX0yQtfRPu9CRBEC4mZ95fnvNj00
 sleep_time = 2
 logmode = False
 get_latest_video = False
-video_id = ""
-channel_id = ""
 
 
 def ensure_output_dir():

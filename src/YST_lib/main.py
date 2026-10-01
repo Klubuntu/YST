@@ -1,13 +1,20 @@
-import json
 import os
 import sys
 from time import localtime, sleep, strftime
 
+import requests
 from colorama import Fore, Style
 
-from YST_lib.required import *
-from YST_lib.arguments import *
+from YST_lib.arguments import STAT_FILES, options
 from YST_lib.banner import print_banner
+from YST_lib.required import (
+    API_KEY,
+    API_URL,
+    REQUEST_TIMEOUT,
+    ensure_output_dir,
+    sep,
+    soft_dir,
+)
 
 
 def date():

@@ -3,7 +3,6 @@ import sys
 
 from colorama import Fore, Style
 
-from YST_lib.required import *
 from YST_lib.cli import (
     STAT_FILES,
     check_arg,
@@ -13,6 +12,7 @@ from YST_lib.cli import (
     parse_int,
     resolve_log_selection,
 )
+from YST_lib.required import get_latest_video, logmode, sleep_time
 
 
 def prompt(label, message):
@@ -27,6 +27,12 @@ def prompt(label, message):
     return value
 
 
+def print_available_metrics():
+    print(f"{Style.BRIGHT}Available metrics:{Style.RESET_ALL}")
+    for metric_key, metric_file in STAT_FILES.items():
+        print(f"  {Fore.YELLOW}{metric_key:<16}{Style.RESET_ALL} -> {metric_file}")
+
+
 arguments = check_arg()
 arguments2 = copy.copy(arguments)
 
@@ -37,9 +43,7 @@ list_logs = parse_bool(arguments.get("list_logs"), False)
 log_selection = resolve_log_selection(arguments.get("enable_log"), arguments.get("disable_log"))
 
 if list_logs:
-    print(f"{Style.BRIGHT}Available metrics:{Style.RESET_ALL}")
-    for key, filename in STAT_FILES.items():
-        print(f"  {Fore.YELLOW}{key:<16}{Style.RESET_ALL} -> {filename}")
+    print_available_metrics()
     sys.exit(0)
 
 if not arguments2.get("channel_id"):

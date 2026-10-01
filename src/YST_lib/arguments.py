@@ -12,7 +12,7 @@ from YST_lib.cli import (
     parse_int,
     resolve_log_selection,
 )
-from YST_lib.required import get_latest_video, logmode, sleep_time
+from YST_lib.required import DEFAULT_DB_PATH, get_latest_video, logmode, sleep_time
 
 
 def prompt(label, message):
@@ -41,6 +41,8 @@ latest_video = parse_bool(arguments.get("latest_video"), get_latest_video)
 sleep_time = parse_int(arguments.get("sleep_time"), sleep_time, "sleep_time")
 list_logs = parse_bool(arguments.get("list_logs"), False)
 log_selection = resolve_log_selection(arguments.get("enable_log"), arguments.get("disable_log"))
+history_path = arguments.get("db") or DEFAULT_DB_PATH
+snapshot_time = parse_int(arguments.get("snapshot_time"), 60, "snapshot_time")
 
 if list_logs:
     print_available_metrics()
@@ -62,4 +64,6 @@ options = {
     "log_mode": log_mode,
     "latest_video": latest_video,
     "log_selection": log_selection,
+    "history_path": history_path,
+    "snapshot_time": snapshot_time,
 }

@@ -17,6 +17,9 @@ sleep_time = 2
 logmode = False
 get_latest_video = False
 
+# history storage
+DEFAULT_DB_PATH = "data/yst.db"
+
 
 def ensure_output_dir():
     try:

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Convenience wrapper so the tool can be called as ./scripts/yst [options]
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PYTHON="${PYTHON:-python3}"
+
+exec "$PYTHON" "$ROOT/src/YST.py" "$@"

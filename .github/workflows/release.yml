@@ -1,0 +1,131 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Tag to build (for example v1.2.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    name: tests and lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt -r requirements-dev.txt pyflakes
+      - run: python -m pytest -q
+      - run: python -m pyflakes src tests
+
+  build:
+    name: build ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    needs: [verify]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows
+            os: windows-latest
+            binary: YST.exe
+          - name: linux
+            os: ubuntu-latest
+            binary: yst
+          - name: macos
+            os: macos-latest
+            binary: yst
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt pyinstaller
+      - name: Build executable
+        run: >
+          pyinstaller build/YST.spec
+          --distpath dist
+          --workpath build/yst
+          --onefile
+          ${{ matrix.os == 'windows-latest' && '' || '--name yst' }}
+      - name: Checksum
+        shell: bash
+        run: sha256sum "dist/${{ matrix.binary }}" > "dist/${{ matrix.binary }}.sha256"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yst-${{ matrix.name }}
+          path: |
+            dist/${{ matrix.binary }}
+            dist/${{ matrix.binary }}.sha256
+
+  sign:
+    name: sign checksums
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - id: key
+        name: Look for a signing key
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        run: |
+          if [ -n "$GPG_PRIVATE_KEY" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Collect checksums
+        run: cat artifacts/*/*.sha256 > artifacts/checksums.txt
+      - name: Import signing key
+        if: steps.key.outputs.available == 'true'
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        run: echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+      - name: Sign
+        if: steps.key.outputs.available == 'true'
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          echo "$GPG_PASSPHRASE" | gpg --batch --pinentry-mode loopback \
+            --armor --detach-sign artifacts/checksums.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: checksums-signed
+          path: artifacts/checksums.txt*
+          if-no-files-found: warn
+
+  publish:
+    name: publish release
+    needs: [build, sign]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.version || github.ref_name }}
+          fail_on_unmatched_files: false
+          files: |
+            artifacts/*/YST.exe
+            artifacts/*/yst
+            artifacts/checksums-signed/checksums.txt
+            artifacts/checksums-signed/checksums.txt.asc
+          body: |
+            Binaries for Windows, Linux and macOS, each with a SHA-256 checksum.
+
+            Verify a download against `checksums.txt`, and against
+            `checksums.txt.asc` when a signing key is configured for this
+            repository. The signature step is skipped when there is no key.

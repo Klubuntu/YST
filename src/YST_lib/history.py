@@ -39,6 +39,12 @@ VIDEO_COLUMNS = {
 
 EXTRA_COLUMNS = ", ".join(VIDEO_COLUMNS)
 
+INSERT_SNAPSHOT = (
+    "INSERT INTO snapshots "
+    "(recorded_at, channel_id, video_id, " + COLUMNS + ", " + EXTRA_COLUMNS + ") "
+    "VALUES (" + ", ".join("?" * (3 + len(METRIC_KEYS) + len(VIDEO_COLUMNS))) + ")"
+)
+
 
 def migrate(connection):
     existing = {row["name"] for row in connection.execute("PRAGMA table_info(snapshots)")}
@@ -69,12 +75,7 @@ def record(connection, channel_id, video_id, values, meta=None):
         meta.get("video_published_at"),
         int(bool(meta.get("subs_hidden", False))),
     ]
-    placeholders = ", ".join("?" * (3 + len(METRIC_KEYS) + len(VIDEO_COLUMNS)))
-    connection.execute(
-        f"INSERT INTO snapshots (recorded_at, channel_id, video_id, {COLUMNS}, {EXTRA_COLUMNS}) "
-        f"VALUES ({placeholders})",
-        row,
-    )
+    connection.execute(INSERT_SNAPSHOT, row)
     connection.commit()
     return row[0]
 

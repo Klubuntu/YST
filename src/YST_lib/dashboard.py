@@ -149,7 +149,7 @@ def format_summary(changes, hours, samples, spark_key="video_views"):
     return lines
 
 
-def format_details(meta, stamp=None):
+def format_details(meta):
     if not meta:
         return []
     lines = []

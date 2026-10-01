@@ -1,5 +1,6 @@
 import os
 import sys
+from contextlib import contextmanager
 from time import localtime, sleep, strftime, time
 
 import requests
@@ -276,6 +277,70 @@ def write_report(database, channel_id, video_id):
     return target
 
 
+@contextmanager
+def graceful_exit():
+    try:
+        yield
+    except KeyboardInterrupt:
+        print(f"{Fore.LIGHTRED_EX}                          User Exit                {Style.RESET_ALL}")
+        sys.exit(0)
+
+
+def run_watchlist(database):
+    watch_ids = []
+    for entry in parse_watchlist(options["watchlist"]):
+        resolved = extract_channel_id(entry)
+        if resolved not in watch_ids:
+            watch_ids.append(resolved)
+    if not watch_ids:
+        print(f"{Fore.LIGHTRED_EX}Watchlist '{options['watchlist']}' is empty{Style.RESET_ALL}")
+        sys.exit(1)
+    last_snapshots = {}
+    with graceful_exit():
+        while True:
+            watch_channels(database, watch_ids, last_snapshots)
+            sleep(options["sleep_time"])
+
+
+def run_verbose(database, channel_id, video_id):
+    last_snapshot = None
+    with graceful_exit():
+        while True:
+            date()
+            values, meta = collect(channel_id, video_id)
+            last_snapshot, previous = take_snapshot(
+                database, channel_id, video_id, values, meta, last_snapshot
+            )
+            show(database, channel_id, video_id, values, meta, previous)
+            sleep(options["sleep_time"])
+
+
+def run_quiet(database, channel_id, video_id):
+    last_snapshot = None
+    progress = "-"
+    print(f"Start Logging to Folder {soft_dir}")
+    with graceful_exit():
+        while True:
+            values, meta = collect(channel_id, video_id)
+            last_snapshot, previous = take_snapshot(
+                database, channel_id, video_id, values, meta, last_snapshot
+            )
+            print(f"{Fore.LIGHTYELLOW_EX}{progress}", end="\r")
+            progress += "-"
+            if progress == "-" * 60:
+                progress = "-"
+            sleep(options["sleep_time"])
+
+
+def resolve_video_id(video_id, channel_id):
+    if options["latest_video"]:
+        video_id = get_latest_video_id(channel_id)
+    if not video_id:
+        print(f"{Fore.LIGHTRED_EX}No Video ID or Youtube Link{Style.RESET_ALL}")
+        sys.exit(1)
+    return video_id
+
+
 def main():
     print_banner()
     print("")
@@ -301,22 +366,8 @@ def main():
     database = connect(options["history_path"])
 
     if options["watchlist"]:
-        watch_ids = []
-        for entry in parse_watchlist(options["watchlist"]):
-            resolved = extract_channel_id(entry)
-            if resolved not in watch_ids:
-                watch_ids.append(resolved)
-        if not watch_ids:
-            print(f"{Fore.LIGHTRED_EX}Watchlist '{options['watchlist']}' is empty{Style.RESET_ALL}")
-            sys.exit(1)
-        last_snapshots = {}
-        try:
-            while True:
-                watch_channels(database, watch_ids, last_snapshots)
-                sleep(options["sleep_time"])
-        except KeyboardInterrupt:
-            print(f"{Fore.LIGHTRED_EX}                          User Exit                {Style.RESET_ALL}")
-            sys.exit(0)
+        run_watchlist(database)
+        return
 
     if options["report"]:
         write_report(database, channel_id, video_id)
@@ -326,37 +377,8 @@ def main():
         export_history(database, channel_id, video_id)
         return
 
-    try:
-        if options["latest_video"]:
-            video_id = get_latest_video_id(channel_id)
-        if not video_id:
-            print(f"{Fore.LIGHTRED_EX}No Video ID or Youtube Link{Style.RESET_ALL}")
-            sys.exit(1)
-
-        last_snapshot = None
-        verbose = options["log_mode"] or options["dashboard"]
-        if verbose:
-            while True:
-                date()
-                values, meta = collect(channel_id, video_id)
-                last_snapshot, previous = take_snapshot(
-                    database, channel_id, video_id, values, meta, last_snapshot
-                )
-                show(database, channel_id, video_id, values, meta, previous)
-                sleep(options["sleep_time"])
-        else:
-            progress = "-"
-            print(f"Start Logging to Folder {soft_dir}")
-            while True:
-                values, meta = collect(channel_id, video_id)
-                last_snapshot, previous = take_snapshot(
-                    database, channel_id, video_id, values, meta, last_snapshot
-                )
-                print(f"{Fore.LIGHTYELLOW_EX}{progress}", end="\r")
-                progress += "-"
-                if progress == "-" * 60:
-                    progress = "-"
-                sleep(options["sleep_time"])
-    except KeyboardInterrupt:
-        print(f"{Fore.LIGHTRED_EX}                          User Exit                {Style.RESET_ALL}")
-        sys.exit(0)
+    video_id = resolve_video_id(video_id, channel_id)
+    if options["log_mode"] or options["dashboard"]:
+        run_verbose(database, channel_id, video_id)
+    else:
+        run_quiet(database, channel_id, video_id)

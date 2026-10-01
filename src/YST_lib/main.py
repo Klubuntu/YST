@@ -322,7 +322,7 @@ def run_quiet(database, channel_id, video_id):
     with graceful_exit():
         while True:
             values, meta = collect(channel_id, video_id)
-            last_snapshot, previous = take_snapshot(
+            last_snapshot = take_snapshot(
                 database, channel_id, video_id, values, meta, last_snapshot
             )
             print(f"{Fore.LIGHTYELLOW_EX}{progress}", end="\r")

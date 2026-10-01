@@ -4,6 +4,8 @@ import time
 import pytest
 
 from YST_lib.history import (
+    ADD_COLUMN,
+    INSERT_SNAPSHOT,
     METRIC_KEYS,
     changes,
     connect,
@@ -167,6 +169,17 @@ def test_migrate_adds_video_columns_to_existing_database(tmp_path):
     columns = {row["name"] for row in connection.execute("PRAGMA table_info(snapshots)")}
     assert {"video_title", "video_duration", "video_published_at"} <= columns
     connection.close()
+
+
+def test_insert_matches_columns():
+    # INSERT_SNAPSHOT is a statement literal, so it cannot drift from the column
+    # lists on its own. Assert it here instead.
+    columns_part, values_part = INSERT_SNAPSHOT.split(") VALUES ")
+    columns = [c.strip() for c in columns_part.split("(", 1)[1].split(",")]
+    placeholders = [v.strip() for v in values_part.strip("()").split(",")]
+    expected = ["recorded_at", "channel_id", "video_id"] + list(METRIC_KEYS) + list(ADD_COLUMN)
+    assert columns == expected
+    assert placeholders == ["?"] * len(expected)
 
 
 def test_record_stores_video_meta(database):

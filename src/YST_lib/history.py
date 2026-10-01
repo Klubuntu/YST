@@ -28,29 +28,29 @@ CREATE INDEX IF NOT EXISTS idx_snapshots_channel_time
     ON snapshots (channel_id, video_id, recorded_at);
 """
 
-COLUMNS = ", ".join(METRIC_KEYS)
-
-VIDEO_COLUMNS = {
-    "video_title": "TEXT",
-    "video_duration": "INTEGER",
-    "video_published_at": "INTEGER",
-    "subs_hidden": "INTEGER DEFAULT 0",
+ADD_COLUMN = {
+    "video_title": "ALTER TABLE snapshots ADD COLUMN video_title TEXT",
+    "video_duration": "ALTER TABLE snapshots ADD COLUMN video_duration INTEGER",
+    "video_published_at": "ALTER TABLE snapshots ADD COLUMN video_published_at INTEGER",
+    "subs_hidden": "ALTER TABLE snapshots ADD COLUMN subs_hidden INTEGER DEFAULT 0",
 }
 
-EXTRA_COLUMNS = ", ".join(VIDEO_COLUMNS)
-
+# Statement literal, so no SQL is ever built at runtime. test_insert_matches_columns
+# fails if a column is added to METRIC_KEYS or ADD_COLUMN without updating it.
 INSERT_SNAPSHOT = (
-    "INSERT INTO snapshots "
-    "(recorded_at, channel_id, video_id, " + COLUMNS + ", " + EXTRA_COLUMNS + ") "
-    "VALUES (" + ", ".join("?" * (3 + len(METRIC_KEYS) + len(VIDEO_COLUMNS))) + ")"
+    "INSERT INTO snapshots ("
+    "recorded_at, channel_id, video_id, "
+    "subs, channel_views, channel_videos, video_views, video_likes, video_comments, "
+    "video_title, video_duration, video_published_at, subs_hidden"
+    ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 )
 
 
 def migrate(connection):
     existing = {row["name"] for row in connection.execute("PRAGMA table_info(snapshots)")}
-    for column, kind in VIDEO_COLUMNS.items():
+    for column, statement in ADD_COLUMN.items():
         if column not in existing:
-            connection.execute(f"ALTER TABLE snapshots ADD COLUMN {column} {kind}")
+            connection.execute(statement)
     connection.commit()
 
 

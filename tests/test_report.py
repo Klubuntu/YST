@@ -69,12 +69,10 @@ def test_save_report_writes_file(tmp_path):
     assert open(target, encoding="utf-8").read() == "<html></html>"
 
 
-def test_save_report_reports_unwritable_folder(tmp_path):
-    blocked = tmp_path / "blocked"
-    blocked.mkdir()
-    blocked.chmod(0o500)
-    try:
-        with pytest.raises(OSError):
-            save_report("x", str(blocked), "report.html")
-    finally:
-        blocked.chmod(0o700)
+def test_save_report_reports_unwritable_target(tmp_path):
+    # A directory in place of the file fails on every platform, unlike chmod,
+    # which only removes write permission on POSIX.
+    target = tmp_path / "report.html"
+    target.mkdir()
+    with pytest.raises(OSError):
+        save_report("x", str(tmp_path), "report.html")

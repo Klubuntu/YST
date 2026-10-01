@@ -1,0 +1,152 @@
+import time
+
+import pytest
+
+from YST_lib.history import (
+    METRIC_KEYS,
+    changes,
+    connect,
+    count,
+    delta,
+    latest,
+    record,
+    series,
+    window,
+)
+
+
+def make_values(**overrides):
+    values = {key: 0 for key in METRIC_KEYS}
+    values.update(
+        {
+            "subs": 100,
+            "channel_views": 1000,
+            "channel_videos": 10,
+            "video_views": 500,
+            "video_likes": 20,
+            "video_comments": 5,
+        }
+    )
+    values.update(overrides)
+    return values
+
+
+@pytest.fixture()
+def database(tmp_path):
+    connection = connect(str(tmp_path / "yst.db"))
+    yield connection
+    connection.close()
+
+
+def seed(connection, values, channel="UCtest", video="abc123", recorded_at=None):
+    connection.execute(
+        "INSERT INTO snapshots (recorded_at, channel_id, video_id, subs, channel_views, "
+        "channel_videos, video_views, video_likes, video_comments) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (
+            recorded_at if recorded_at is not None else int(time.time()),
+            channel,
+            video,
+            *(values[key] for key in METRIC_KEYS),
+        ),
+    )
+    connection.commit()
+
+
+def test_connect_creates_folder(tmp_path):
+    target = str(tmp_path / "nested" / "yst.db")
+    connection = connect(target)
+    assert count(connection) == 0
+    connection.close()
+
+
+def test_record_and_latest_roundtrip(database):
+    record(database, "UCtest", "abc123", make_values(video_views=500))
+    row = latest(database, "UCtest", "abc123")
+    assert row["video_views"] == 500
+    assert row["channel_id"] == "UCtest"
+
+
+def test_latest_without_snapshots_returns_none(database):
+    assert latest(database, "UCmissing", "abc123") is None
+
+
+def test_latest_returns_most_recent(database):
+    seed(database, make_values(video_views=1), recorded_at=1000)
+    seed(database, make_values(video_views=2), recorded_at=2000)
+    assert latest(database, "UCtest", "abc123")["video_views"] == 2
+
+
+def test_record_uses_current_time_and_defaults(database):
+    record(database, "UCtest", "abc123", {})
+    row = latest(database, "UCtest", "abc123")
+    assert row["video_views"] == 0
+    assert row["recorded_at"] <= int(time.time())
+
+
+def test_delta_against_previous_snapshot():
+    previous = make_values(video_views=500)
+    current = make_values(video_views=553, video_likes=22)
+    result = delta(previous, current)
+    assert result["video_views"] == 53
+    assert result["video_likes"] == 2
+    assert result["subs"] == 0
+
+
+def test_delta_without_previous_is_empty():
+    assert delta(None, make_values()) == {}
+
+
+def test_changes_over_window(database):
+    now = int(time.time())
+    seed(database, make_values(video_views=100), recorded_at=now - 7200)
+    seed(database, make_values(video_views=200), recorded_at=now)
+    result = changes(database, "UCtest", "abc123", hours=24)
+    assert result["video_views"]["change"] == 100
+    assert result["video_views"]["current"] == 200
+
+
+def test_changes_needs_two_snapshots(database):
+    seed(database, make_values())
+    assert changes(database, "UCtest", "abc123") == {}
+
+
+def test_changes_per_hour_rate(database):
+    now = int(time.time())
+    seed(database, make_values(video_views=0), recorded_at=now - 3600)
+    seed(database, make_values(video_views=3600), recorded_at=now)
+    result = changes(database, "UCtest", "abc123", hours=24)
+    assert result["video_views"]["per_hour"] == 3600
+
+
+def test_window_filters_by_age(database):
+    now = int(time.time())
+    seed(database, make_values(), recorded_at=now - 7200)
+    seed(database, make_values(), recorded_at=now)
+    assert len(window(database, "UCtest", "abc123", hours=1)) == 1
+    assert len(window(database, "UCtest", "abc123", hours=24)) == 2
+
+
+def test_window_without_video_returns_every_video(database):
+    seed(database, make_values(), video="one")
+    seed(database, make_values(), video="two")
+    assert len(window(database, "UCtest", None, hours=24)) == 2
+    assert len(window(database, "UCtest", "one", hours=24)) == 1
+
+
+def test_series_returns_pairs(database):
+    now = int(time.time())
+    seed(database, make_values(video_views=10), recorded_at=now - 60)
+    seed(database, make_values(video_views=20), recorded_at=now)
+    assert series(database, "UCtest", "video_views", "abc123", hours=24) == [
+        (now - 60, 10),
+        (now, 20),
+    ]
+
+
+def test_series_rejects_unknown_metric(database):
+    try:
+        series(database, "UCtest", "nope")
+    except ValueError:
+        return
+    raise AssertionError("expected ValueError")

@@ -59,11 +59,6 @@ Start with [usage](docs/usage.md) for the full option reference.
 
 ## 🗺️ Roadmap
 
-Done: URL and `@handle` parsing, local history with deltas, dashboard with
-sparkline and block charts, CSV/JSON export, HTML report with SVG charts, video
-and channel comparison, watchlists, sub-commands, `.env` configuration, pytest
-suite, CI and signed releases for three platforms.
-
 Planned: documented scheduled runs (cron, systemd, Task Scheduler),
 channel-level trends in the report, and threshold alerts. Member counts and
 subscriber status are unavailable — YouTube removed them from the public API.

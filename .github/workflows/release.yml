@@ -49,12 +49,12 @@ jobs:
           python-version: "3.12"
       - run: pip install -r requirements.txt pyinstaller
       - name: Build executable
+        env:
+          YST_BINARY_NAME: ${{ matrix.os == 'windows-latest' && 'YST' || 'yst' }}
         run: >
           pyinstaller build/YST.spec
           --distpath dist
           --workpath build/yst
-          --onefile
-          ${{ matrix.os == 'windows-latest' && '' || '--name yst' }}
       - name: Checksum
         shell: bash
         run: sha256sum "dist/${{ matrix.binary }}" > "dist/${{ matrix.binary }}.sha256"

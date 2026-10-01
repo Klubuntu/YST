@@ -10,6 +10,17 @@ txt/
 # PyInstaller intermediate files (final binaries stay in dist/)
 build/*.exe
 build/bundle/
+build/yst/
+build/yst-linux/
+build/yst-macos/
+build/yst.spec.bak
+
+# locally built Linux and macOS binaries; dist/YST.exe is tracked
+dist/yst
+dist/yst.linux
+dist/yst.macos
+dist/*.sha256
+
 # history database and exports
 data/
 exports/

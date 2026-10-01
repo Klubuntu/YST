@@ -18,11 +18,11 @@ else
     name=YST
 fi
 
-python -m PyInstaller build/YST.spec \
+# A .spec build is already onefile, and PyInstaller rejects --onefile and
+# --name there; the name comes from YST_BINARY_NAME instead.
+YST_BINARY_NAME="$name" python -m PyInstaller build/YST.spec \
     --distpath dist \
-    --workpath build/yst \
-    --onefile \
-    --name "$name"
+    --workpath build/yst
 
 ls -l "dist/$name"
 sha256sum "dist/$name" | tee "dist/$name.sha256"

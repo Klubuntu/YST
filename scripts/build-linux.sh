@@ -13,13 +13,14 @@ docker run --rm \
     -v "$root:/src" \
     -w /src \
     -e PYTHONDONTWRITEBYTECODE=1 \
+    -e YST_BINARY_NAME=yst \
     "$image" \
     bash -c '
         set -euo pipefail
         apt-get update -qq && apt-get install -y -qq --no-install-recommends binutils >/dev/null
         pip install --quiet -r requirements.txt pyinstaller
         python -m PyInstaller build/YST.spec \
-            --distpath dist --workpath build/yst-linux --onefile --name yst
+            --distpath dist --workpath build/yst-linux
         mv dist/yst dist/yst.linux
         sha256sum dist/yst.linux > dist/yst.linux.sha256
     '

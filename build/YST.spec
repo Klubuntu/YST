@@ -4,6 +4,11 @@ import os
 
 SRC = os.path.join(SPECPATH, os.pardir, "src")
 
+# The binary is onefile already (a spec without a COLLECT is a onefile build), so
+# --onefile and --name are rejected by PyInstaller. Set YST_BINARY_NAME to change
+# the output name: `yst` on Linux and macOS, `YST` for the .exe on Windows.
+NAME = os.environ.get("YST_BINARY_NAME", "YST")
+
 block_cipher = None
 
 
@@ -29,7 +34,7 @@ exe = EXE(pyz,
           a.zipfiles,
           a.datas,  
           [],
-          name='YST',
+          name=NAME,
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,

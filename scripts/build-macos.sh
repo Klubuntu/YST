@@ -19,12 +19,13 @@ docker run --rm \
     -v "$root:/src" \
     -w /src \
     -e PYTHONDONTWRITEBYTECODE=1 \
+    -e YST_BINARY_NAME=yst \
     ghcr.io/macpaw/macos-ci:latest \
     bash -c '
         set -euo pipefail
         pip install --quiet -r requirements.txt pyinstaller
         python -m PyInstaller build/YST.spec \
-            --distpath dist --workpath build/yst-macos --onefile --name yst
+            --distpath dist --workpath build/yst-macos
         mv dist/yst dist/yst.macos
         sha256sum dist/yst.macos > dist/yst.macos.sha256
     '

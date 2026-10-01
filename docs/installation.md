@@ -79,14 +79,23 @@ PyInstaller as single files.
 
 ## 🔨 Rebuilding the executables
 
+A `.spec` build is already a onefile build, so PyInstaller rejects `--onefile`
+and `--name` when a spec file is given — the name comes from the
+`YST_BINARY_NAME` environment variable instead.
+
+```bash
+./scripts/build.sh          # current platform -> dist/YST.exe or dist/yst
+./scripts/build-linux.sh    # dist/yst.linux, in a Linux container
+./scripts/build-macos.sh    # dist/yst.macos, in a macOS container
+scripts\build.bat           # Windows -> dist\YST.exe
+```
+
+Or by hand:
+
 ```bash
 pip install -r requirements.txt pyinstaller
 
-# Windows
-pyinstaller build/YST.spec --distpath dist --workpath build/yst --onefile
-
-# Linux and macOS
-pyinstaller build/YST.spec --distpath dist --workpath build/yst --onefile --name yst
+YST_BINARY_NAME=yst pyinstaller build/YST.spec --distpath dist --workpath build/yst
 ```
 
 Publishing a release, checksums and signing are covered in

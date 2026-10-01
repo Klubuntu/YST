@@ -118,6 +118,12 @@ python src\YST.py -channel_id=UClFN9LShD_Pv0wnSeUKbUZw -video_id=FJDVKeh7RJI -sl
 | `-enable_log`  | metric list    | all     | Log only the listed metrics                         |
 | `-disable_log` | metric list    | —       | Log everything except the listed metrics            |
 | `-list_logs`   | `True`/`False` | `False` | Print the available metric keys and exit            |
+| `-snapshot_time` | int (sec)   | `60`    | How often a snapshot is written to the history      |
+| `-history`     | int (hours)   | `24`    | Window used by the dashboard and the export         |
+| `-dashboard`   | `True`/`False` | `False` | Add the history summary and sparkline to the output  |
+| `-db`          | path          | `data/yst.db` | Location of the history database            |
+| `-export`      | `csv`/`json`  | —       | Export the stored history and exit                   |
+| `-export_path` | path          | `exports` | Folder for exported files                         |
 
 Values can be attached with `=` or passed as the next token, so
 `-sleep_time=5` and `-sleep_time 5` are the same. Boolean flags accept
@@ -158,6 +164,54 @@ on start-up. Disabled metrics are neither written to disk nor printed in
 > Output is colored through `colorama`, so colors now render in the classic Command Prompt too.
 > When stdout is not a terminal (e.g. piped to a file), escape codes are stripped automatically.
 
+### History, deltas and dashboard
+
+Every refresh is stored as a snapshot in a local SQLite database
+(`data/yst.db` by default), which makes growth measurable over time. Deltas
+appear next to each metric automatically once a second snapshot exists:
+
+```
+(01-10-2026) - 19:33:41
+Subscribers: 693 (0)
+Channel Views: 152 486 (+12)
+Video Views: 111 200 (+553)
+```
+
+`-dashboard=True` adds a summary of the last `-history` hours with per-hour
+rates and a sparkline:
+
+```
+Last 24h:
+Video Likes: +39 (+2/h)
+Video Views: +10 647 (+546/h)
+Video Views trend: ▁▁▁▁▁▁▁▁▂▂▂▂▂▃▃▃▄▄▄▅▅▅▆▆▆▇▇█
+```
+
+```bash
+# monitor a channel and refresh the summary every minute
+python src/YST.py -channel_id=UCifZaTQPiHE2QRgEwDNfhug -video_id=C7REVNM_EWY -sleep_time=60 -dashboard=True
+
+# snapshots every 5 minutes into a custom database
+python src/YST.py -channel_id=UC... -video_id=... -snapshot_time=300 -db data/mine.db
+```
+
+### Export
+
+`-export` writes the stored snapshots and exits, so it costs no API calls:
+
+```bash
+# every video of the channel, last 24 hours, default folder
+python src/YST.py -channel_id=UCifZaTQPiHE2QRgEwDNfhug -export csv
+
+# one video, last 7 days, into reports/
+python src/YST.py -channel_id=UC... -video_id=C7REVNM_EWY -history 168 -export json -export_path reports
+```
+
+```csv
+recorded_at,channel_id,video_id,subs,channel_views,channel_videos,video_views,video_likes,video_comments
+1790883289,UCifZaTQPiHE2QRgEwDNfhug,Xknt3_QJY7o,693,152486,434,43,3,0
+```
+
 ### Output files
 
 Statistics are refreshed and written to the `txt/` folder next to the current working directory:
@@ -182,6 +236,19 @@ Only the metrics selected with `-enable_log` / `-disable_log` are written.
 scripts\run.bat
 ```
 
+### Linux and macOS
+
+There is no separate Linux or macOS binary — the tool is pure Python, so run it
+from source. Colors work out of the box once `colorama` is installed:
+
+```bash
+git clone https://github.com/Klubuntu/YST.git
+cd YST
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+python src/YST.py -channel_id=UCifZaTQPiHE2QRgEwDNfhug -video_id=C7REVNM_EWY -log_mode=True
+```
+
 ## 📁 Project structure
 
 ```
@@ -192,9 +259,20 @@ scripts\run.bat
 ├── assets/               # screenshots and support badges used by this README
 ├── build/YST.spec        # PyInstaller recipe for the Windows executable
 ├── scripts/run.bat       # Windows launcher
+├── tests/                # pytest suite for parsing, history, dashboard, export
 ├── tools/check_args.py   # small helper for inspecting CLI arguments
 └── dist/                 # released executables
 ```
+
+Run the tests with:
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest
+```
+
+Generated at runtime and ignored by git: `txt/` (latest values), `data/`
+(history database), `exports/` (CSV and JSON exports).
 
 To rebuild the Windows executable:
 
@@ -208,10 +286,25 @@ pyinstaller build/YST.spec
 - [All releases](https://github.com/klubuntu/YST/releases/)
 - [In-development branch](https://github.com/Klubuntu/YST/tree/future-change)
 
-## 🗺️ Future improvements
+## 🗺️ Roadmap
 
+Done in this repository:
+
+- [x] Automatic URL parsing — channel URLs, `@handle`, `youtu.be`, `/shorts/`, `/live/`
+- [x] Local history of every snapshot with growth deltas
+- [x] Dashboard with 24h summary, per-hour rates and sparkline
+- [x] CSV and JSON export
+- [x] pytest suite and a CI workflow building the Windows executable
+- [x] Linux and macOS support through the source install
+
+Planned:
+
+- [ ] Sub-commands (`video`, `channel`, `latest`, `monitor`, `compare`, `export`) next to the flags
+- [ ] Video comparison with like, comment and views-per-hour ratios
+- [ ] Publication date and video length, plus subscriber status
+- [ ] Signed releases and binaries for Linux and macOS
+- [ ] Config file (`.env`) and a friendlier message when the API key is invalid or the quota is spent
 - ~~Support for more texts (Members, Subscribers Status, etc.)~~ — *YouTube removed them from the public API*
-- [ ] More stats to come
 
 ## 💖 Support this project
 

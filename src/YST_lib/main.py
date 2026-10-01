@@ -6,8 +6,9 @@ import requests
 from colorama import Fore, Style
 
 from YST_lib.arguments import STAT_FILES, options
+from YST_lib.cli import parse_duration, parse_published_at
 from YST_lib.banner import print_banner
-from YST_lib.dashboard import ROW_ORDER, print_deltas, print_summary
+from YST_lib.dashboard import ROW_ORDER, print_deltas, print_details, print_summary
 from YST_lib.exporter import save
 from YST_lib.history import changes, connect, delta, latest, record, series
 from YST_lib.required import (
@@ -77,24 +78,32 @@ def request_channel(channel_id):
 
 
 def request_video(video_id):
-    query = f"{API_URL}/videos?part=statistics&id={video_id}&key={API_KEY}"
+    query = f"{API_URL}/videos?part=snippet,contentDetails,statistics&id={video_id}&key={API_KEY}"
     try:
-        statistics = fetch_statistics(query)["items"][0]["statistics"]
+        item = fetch_statistics(query)["items"][0]
     except (KeyError, IndexError, TypeError):
         print(f"{Fore.LIGHTRED_EX}Invalid URL or Video ID{Style.RESET_ALL}")
         sys.exit(1)
 
+    statistics = item.get("statistics", {})
     values = {
         "video_views": statistics.get("viewCount", 0),
         "video_likes": statistics.get("likeCount", 0),
         "video_comments": statistics.get("commentCount", 0),
     }
     write_stats(values)
-    return values
+    snippet = item.get("snippet", {})
+    details = item.get("contentDetails", {})
+    return values, {
+        "video_title": snippet.get("title"),
+        "video_duration": parse_duration(details.get("duration")),
+        "video_published_at": parse_published_at(snippet.get("publishedAt")),
+    }
 
 
-def show(database, channel_id, video_id, values, previous):
+def show(database, channel_id, video_id, values, meta, previous):
     print_deltas(values, delta(previous, values), options["log_selection"])
+    print_details(meta)
     if not options["dashboard"]:
         return
     hours = options["history_hours"]
@@ -104,14 +113,16 @@ def show(database, channel_id, video_id, values, previous):
 
 
 def collect(channel_id, video_id):
-    return {**request_channel(channel_id), **request_video(video_id)}
+    channel = request_channel(channel_id)
+    video, meta = request_video(video_id)
+    return {**channel, **video}, meta
 
 
-def take_snapshot(database, channel_id, video_id, values, last_snapshot):
+def take_snapshot(database, channel_id, video_id, values, meta, last_snapshot):
     previous = latest(database, channel_id, video_id)
     now = int(time())
     if last_snapshot is None or now - last_snapshot >= options["snapshot_time"]:
-        record(database, channel_id, video_id, values)
+        record(database, channel_id, video_id, values, meta)
         return now, previous
     return last_snapshot, previous
 
@@ -164,19 +175,19 @@ def main():
         if verbose:
             while True:
                 date()
-                values = collect(channel_id, video_id)
+                values, meta = collect(channel_id, video_id)
                 last_snapshot, previous = take_snapshot(
-                    database, channel_id, video_id, values, last_snapshot
+                    database, channel_id, video_id, values, meta, last_snapshot
                 )
-                show(database, channel_id, video_id, values, previous)
+                show(database, channel_id, video_id, values, meta, previous)
                 sleep(options["sleep_time"])
         else:
             progress = "-"
             print(f"Start Logging to Folder {soft_dir}")
             while True:
-                values = collect(channel_id, video_id)
+                values, meta = collect(channel_id, video_id)
                 last_snapshot, previous = take_snapshot(
-                    database, channel_id, video_id, values, last_snapshot
+                    database, channel_id, video_id, values, meta, last_snapshot
                 )
                 print(f"{Fore.LIGHTYELLOW_EX}{progress}", end="\r")
                 progress += "-"

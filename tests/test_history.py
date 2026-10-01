@@ -1,3 +1,4 @@
+import sqlite3
 import time
 
 import pytest
@@ -150,3 +151,33 @@ def test_series_rejects_unknown_metric(database):
     except ValueError:
         return
     raise AssertionError("expected ValueError")
+
+def test_migrate_adds_video_columns_to_existing_database(tmp_path):
+    target = str(tmp_path / "old.db")
+    legacy = sqlite3.connect(target)
+    legacy.execute(
+        "CREATE TABLE snapshots (id INTEGER PRIMARY KEY AUTOINCREMENT, recorded_at INTEGER, "
+        "channel_id TEXT, video_id TEXT, subs INTEGER, channel_views INTEGER, "
+        "channel_videos INTEGER, video_views INTEGER, video_likes INTEGER, video_comments INTEGER)"
+    )
+    legacy.commit()
+    legacy.close()
+
+    connection = connect(target)
+    columns = {row["name"] for row in connection.execute("PRAGMA table_info(snapshots)")}
+    assert {"video_title", "video_duration", "video_published_at"} <= columns
+    connection.close()
+
+
+def test_record_stores_video_meta(database):
+    record(
+        database,
+        "UCtest",
+        "abc123",
+        make_values(),
+        {"video_title": "Title", "video_duration": 3723, "video_published_at": 1674993600},
+    )
+    row = latest(database, "UCtest", "abc123")
+    assert row["video_title"] == "Title"
+    assert row["video_duration"] == 3723
+    assert row["video_published_at"] == 1674993600

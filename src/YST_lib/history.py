@@ -30,6 +30,22 @@ CREATE INDEX IF NOT EXISTS idx_snapshots_channel_time
 
 COLUMNS = ", ".join(METRIC_KEYS)
 
+VIDEO_COLUMNS = {
+    "video_title": "TEXT",
+    "video_duration": "INTEGER",
+    "video_published_at": "INTEGER",
+}
+
+EXTRA_COLUMNS = ", ".join(VIDEO_COLUMNS)
+
+
+def migrate(connection):
+    existing = {row["name"] for row in connection.execute("PRAGMA table_info(snapshots)")}
+    for column, kind in VIDEO_COLUMNS.items():
+        if column not in existing:
+            connection.execute(f"ALTER TABLE snapshots ADD COLUMN {column} {kind}")
+    connection.commit()
+
 
 def connect(db_path):
     folder = os.path.dirname(db_path)
@@ -38,15 +54,22 @@ def connect(db_path):
     connection = sqlite3.connect(db_path)
     connection.row_factory = sqlite3.Row
     connection.executescript(SCHEMA)
+    migrate(connection)
     return connection
 
 
-def record(connection, channel_id, video_id, values):
+def record(connection, channel_id, video_id, values, meta=None):
+    meta = meta or {}
     row = [int(time.time()), channel_id, video_id or ""]
     row += [int(values.get(key, 0) or 0) for key in METRIC_KEYS]
-    placeholders = ", ".join("?" * (3 + len(METRIC_KEYS)))
+    row += [
+        meta.get("video_title"),
+        meta.get("video_duration"),
+        meta.get("video_published_at"),
+    ]
+    placeholders = ", ".join("?" * (3 + len(METRIC_KEYS) + len(VIDEO_COLUMNS)))
     connection.execute(
-        f"INSERT INTO snapshots (recorded_at, channel_id, video_id, {COLUMNS}) "
+        f"INSERT INTO snapshots (recorded_at, channel_id, video_id, {COLUMNS}, {EXTRA_COLUMNS}) "
         f"VALUES ({placeholders})",
         row,
     )

@@ -1,5 +1,6 @@
 import re
 import sys
+from datetime import datetime, timezone
 
 import requests
 from colorama import Fore, Style
@@ -146,3 +147,37 @@ def extract_video_id(value):
         if marker in value:
             return value.split(marker)[1].split("&")[0].split("/")[0]
     return value
+
+
+def parse_duration(value):
+    if not value:
+        return None
+    match = re.match(
+        r"^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$", value.strip().upper()
+    )
+    if not match:
+        return None
+    hours, minutes, seconds = (int(part) if part else 0 for part in match.groups())
+    return hours * 3600 + minutes * 60 + seconds
+
+
+def format_duration(seconds):
+    if not seconds:
+        return "unknown"
+    hours, remainder = divmod(int(seconds), 3600)
+    minutes, secs = divmod(remainder, 60)
+    if hours:
+        return f"{hours}:{minutes:02d}:{secs:02d}"
+    return f"{minutes}:{secs:02d}"
+
+
+def parse_published_at(value):
+    if not value:
+        return None
+    try:
+        moment = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=timezone.utc)
+    return int(moment.timestamp())

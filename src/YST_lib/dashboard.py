@@ -1,4 +1,8 @@
+from time import gmtime, strftime
+
 from colorama import Fore, Style
+
+from YST_lib.cli import format_duration
 
 SPARK_CHARS = "▁▂▃▄▅▆▇█"
 
@@ -104,6 +108,20 @@ def format_summary(changes, hours, samples, spark_key="video_views"):
     return lines
 
 
+def format_details(meta, stamp=None):
+    if not meta:
+        return []
+    lines = []
+    title = meta.get("video_title")
+    if title:
+        lines.append(f"{Style.BRIGHT}Video:{Style.RESET_ALL} {title}")
+    duration = format_duration(meta.get("video_duration"))
+    published = meta.get("video_published_at")
+    when = strftime("%d-%m-%Y", gmtime(published)) if published else "unknown"
+    lines.append(f"{Style.DIM}Published:{Style.RESET_ALL} {when}   Length: {duration}")
+    return lines
+
+
 def print_deltas(values, delta, selected=None):
     for line in format_deltas(values, delta, selected):
         print(line)
@@ -114,3 +132,10 @@ def print_summary(changes, hours, samples):
     for line in format_summary(changes, hours, samples):
         print(line)
     print("")
+
+def print_details(meta):
+    lines = format_details(meta)
+    for line in lines:
+        print(line)
+    if lines:
+        print("")

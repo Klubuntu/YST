@@ -69,6 +69,16 @@ Alternatively, [download the code as a ZIP](https://github.com/Klubuntu/YST/arch
    python src\YST.py
    ```
 
+   On start-up the tool prints its ASCII banner:
+
+   ```text
+    __  _____________
+    \ \/ / ___/_  __/
+     \  /\__ \ / /
+     / /___/ // /
+    /_//____//_/
+   ```
+
    ![Running YST](assets/screenshots/gui-run.png)
 
 2. Enter the required details:
@@ -137,7 +147,7 @@ scripts\run.bat
 .
 ├── src/                  # application source
 │   ├── YST.py            # entry point
-│   └── YST_lib/          # arguments parsing, configuration, main loop
+│   └── YST_lib/          # arguments parsing, configuration, ASCII banner, main loop
 ├── assets/               # screenshots and support badges used by this README
 ├── build/YST.spec        # PyInstaller recipe for the Windows executable
 ├── scripts/run.bat       # Windows launcher

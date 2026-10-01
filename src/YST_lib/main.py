@@ -5,11 +5,13 @@ from colorama import Fore, Style
 
 from YST_lib.required import *
 from YST_lib.arguments import *
+from YST_lib.banner import print_banner
 
 def main():
-    print(sep)
-    print("	YouTube Stats Tool (v 1.0 by https://github.com/klubuntu)")
+    print_banner()
     print("")
+    print(f"{Style.BRIGHT}YouTube Stats Tool (v 1.0 by https://github.com/klubuntu){Style.RESET_ALL}")
+    print(sep)
 
     def date():
         t = localtime()

@@ -34,18 +34,42 @@ jobs:
       - run: python -m pyflakes src tests
 
   build:
-    name: build windows executable
-    runs-on: windows-latest
+    name: build (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
     needs: [test, lint]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows
+            os: windows-latest
+            binary: YST.exe
+          - name: linux
+            os: ubuntu-latest
+            binary: yst
+          - name: macos
+            os: macos-latest
+            binary: yst
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt pyinstaller
-      - run: pyinstaller build/YST.spec --distpath dist --workpath build/yst
+      - name: Build executable
+        run: >
+          pyinstaller build/YST.spec
+          --distpath dist
+          --workpath build/yst
+          --onefile
+          ${{ matrix.os == 'windows-latest' && '' || '--name yst' }}
+      - name: Checksum
+        shell: bash
+        run: sha256sum "dist/${{ matrix.binary }}" > "dist/${{ matrix.binary }}.sha256"
       - uses: actions/upload-artifact@v4
         with:
-          name: YST-windows
-          path: dist/YST.exe
+          name: YST-${{ matrix.name }}
+          path: |
+            dist/${{ matrix.binary }}
+            dist/${{ matrix.binary }}.sha256
           if-no-files-found: error

@@ -54,11 +54,15 @@ def migrate(connection):
     connection.commit()
 
 
-def connect(db_path):
+def connect(db_path, shared=False):
+    """`shared` allows other threads to use the connection, for the API server.
+
+    The caller has to serialise access; the server does it with a lock.
+    """
     folder = os.path.dirname(db_path)
     if folder:
         os.makedirs(folder, exist_ok=True)
-    connection = sqlite3.connect(db_path)
+    connection = sqlite3.connect(db_path, check_same_thread=not shared)
     connection.row_factory = sqlite3.Row
     connection.executescript(SCHEMA)
     migrate(connection)

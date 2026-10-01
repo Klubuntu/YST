@@ -1,5 +1,6 @@
 import os
 import sys
+import threading
 from contextlib import contextmanager
 from time import localtime, sleep, strftime, time
 
@@ -13,6 +14,7 @@ from YST_lib.compare import build_rows, print_table
 from YST_lib.dashboard import ROW_ORDER, print_deltas, print_details, print_summary
 from YST_lib.exporter import save
 from YST_lib.report import CHART_KEYS, render_report, save_report
+from YST_lib.server import Context, build_server
 from YST_lib.watchlist import (
     build_rows as build_channel_rows,
     parse_watchlist,
@@ -341,6 +343,54 @@ def resolve_video_id(video_id, channel_id):
     return video_id
 
 
+def announce_server(host, port, channel_id, video_id):
+    print(f"{Style.BRIGHT}API server:{Style.RESET_ALL} {Fore.YELLOW}http://{host}:{port}{Style.RESET_ALL}")
+    print(f"Channel: {channel_id}" + (f"   Video: {video_id}" if video_id else ""))
+    print(f"{Style.DIM}/metrics  /all  /get/<metric>  /live/<metric>  /history/<metric>  ?format=html{Style.RESET_ALL}")
+    if host in ("0.0.0.0", "::"):
+        print(
+            f"{Fore.LIGHTRED_EX}Bound to all interfaces and there is no authentication - "
+            f"anyone who can reach this port can spend your API quota.{Style.RESET_ALL}"
+        )
+
+
+def run_server(database, channel_id, video_id):
+    host = options["serve_host"]
+    port = options["serve_port"]
+    context = Context(database, channel_id, video_id, options["history_hours"])
+    httpd = build_server(host, port, context)
+    announce_server(host, port, channel_id, video_id)
+
+    if options["log_mode"] or options["dashboard"]:
+        stop = threading.Event()
+        monitor = threading.Thread(
+            target=monitor_until_stopped, args=(database, channel_id, video_id, stop), daemon=True
+        )
+        monitor.start()
+        with graceful_exit():
+            httpd.serve_forever()
+        stop.set()
+    else:
+        with graceful_exit():
+            httpd.serve_forever()
+    httpd.server_close()
+
+
+def monitor_until_stopped(database, channel_id, video_id, stop):
+    last_snapshot = None
+    while not stop.is_set():
+        try:
+            date()
+            values, meta = collect(channel_id, video_id)
+            last_snapshot, previous = take_snapshot(
+                database, channel_id, video_id, values, meta, last_snapshot
+            )
+            show(database, channel_id, video_id, values, meta, previous)
+        except Exception as e:
+            print(f"{Fore.LIGHTRED_EX}Refresh failed: {e}{Style.RESET_ALL}")
+        stop.wait(options["sleep_time"])
+
+
 def main():
     print_banner()
     print("")
@@ -363,7 +413,7 @@ def main():
         compare_channel_list(options["compare_channels"])
         return
 
-    database = connect(options["history_path"])
+    database = connect(options["history_path"], shared=bool(options["serve"]))
 
     if options["watchlist"]:
         run_watchlist(database)
@@ -375,6 +425,10 @@ def main():
 
     if options["export_format"]:
         export_history(database, channel_id, video_id)
+        return
+
+    if options["serve"]:
+        run_server(database, channel_id, resolve_video_id(video_id, channel_id))
         return
 
     video_id = resolve_video_id(video_id, channel_id)

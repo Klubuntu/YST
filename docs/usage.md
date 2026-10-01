@@ -1,7 +1,8 @@
 # Usage
 
 Back to the [README](../README.md). See also
-[metrics and history](metrics.md) and [comparison and watchlists](comparison.md).
+[metrics and history](metrics.md), [comparison and watchlists](comparison.md)
+and the [API server](server.md).
 
 ## Interactive mode
 
@@ -53,6 +54,7 @@ option still works afterwards:
 | `monitor <ID>`    | `-channel_id=<ID> -latest_video=True -log_mode=True`    |
 | `compare <ID...>` | `-compare=<ID1,ID2,...>`                                |
 | `export <ID>`     | `-channel_id=<ID> -export=csv`                          |
+| `serve <ID>`      | `-channel_id=<ID> -serve=True -latest_video=True -log_mode=True` |
 
 ```bash
 python src/YST.py --help
@@ -97,6 +99,9 @@ Values can be attached with `=` or passed as the next token, so
 | `-compare`           | video list     | —             | Compare videos side by side and exit             |
 | `-compare_channels`  | channel list   | —             | Compare channels side by side and exit           |
 | `-watchlist`         | path           | —             | Monitor every channel listed in a text file      |
+| `-serve`             | `True`/`False` | `False`       | Serve the numbers over HTTP                      |
+| `-serve_host`        | host           | `127.0.0.1`   | Interface the API server binds to                |
+| `-serve_port`        | int (port)     | `9132`        | Port for the API server, 1–65535                |
 
 ![Command-line result](../assets/screenshots/cli-result.png)
 
@@ -147,6 +152,9 @@ python src/YST.py -channel_id=@ThatLittlePuff -video_id=https://youtu.be/C7REVNM
 
 # list the metric keys and exit
 python src/YST.py -list_logs=True
+
+# serve the same numbers over HTTP
+python src/YST.py serve UCifZaTQPiHE2QRgEwDNfhug -serve_port=9132
 
 # interactive, everything is asked
 python src/YST.py

@@ -9,11 +9,12 @@ Back to the [README](../README.md).
 ├── src/                  # application source
 │   ├── YST.py            # entry point
 │   └── YST_lib/          # required, cli, arguments, banner, history,
-│                         # dashboard, compare, watchlist, exporter, report, main
+│                         # dashboard, compare, watchlist, exporter, report,
+│                         # server, main
 ├── assets/               # screenshots and support badges used by the README
 ├── build/YST.spec        # PyInstaller recipe for the executables
 ├── docs/                 # this documentation set
-├── scripts/              # run.bat for Windows, yst wrapper for Linux and macOS
+├── scripts/              # run.bat for Windows, yst wrapper, build scripts
 ├── tests/                # pytest suite
 ├── tools/check_args.py   # small helper for inspecting CLI arguments
 └── dist/                 # released executables
@@ -21,8 +22,8 @@ Back to the [README](../README.md).
 
 Module map inside `src/YST_lib/`:
 
-| Module      | Responsibility                                            |
-| ----------- | --------------------------------------------------------- |
+| Module      | Responsibility                                             |
+| ----------- | ---------------------------------------------------------- |
 | `required`  | Configuration, `.env` loading, output folder, colorama init |
 | `cli`       | Argument, ID, duration, metric and API error parsing        |
 | `arguments` | Resolves flags into the `options` dict, prompts when needed  |
@@ -34,6 +35,7 @@ Module map inside `src/YST_lib/`:
 | `watchlist` | Channel comparison table and watchlist rendering            |
 | `exporter`  | CSV and JSON output                                         |
 | `report`    | Self-contained HTML report with SVG charts                  |
+| `server`    | HTTP API and its HTML pages, see [server](server.md)        |
 
 Generated at runtime and ignored by git: `txt/` (latest values), `data/`
 (history database), `exports/` (CSV, JSON and HTML output). `.env.example`
@@ -50,7 +52,9 @@ python -m pytest
 tool runs. The suite covers argument parsing (both value forms, boolean and
 integer validation, metric lists, sub-commands), the snapshot store against a
 temporary SQLite file, dashboard and chart formatting, the comparison tables,
-the watchlist parser and both export formats plus the HTML report.
+the watchlist parser, both export formats, the HTML report and the API server —
+its routing, HTML pages and error paths are tested as plain functions, and one
+test binds port `0` to check the handler itself.
 
 Lint with pyflakes, the same check CI runs:
 
@@ -64,7 +68,21 @@ python -m pyflakes src tests
 
 - **test** – the pytest suite on Linux, Windows and macOS
 - **lint** – pyflakes over `src` and `tests`
-- **build** – `YST.exe` via `build/YST.spec`, uploaded as an artifact
+- **build** – PyInstaller on all three platforms from `build/YST.spec`, each
+  uploaded as an artifact
+
+To build the same binaries locally, `scripts/build.sh` does the current host
+and `scripts/build-linux.sh` and `scripts/build-macos.sh` do the other one:
+
+```bash
+./scripts/build.sh          # current platform, outputs dist/
+./scripts/build-linux.sh    # Linux binary, needs Docker
+./scripts/build-macos.sh    # macOS binary, needs Docker
+```
+
+Both cross scripts build in a container, because PyInstaller cannot produce a
+macOS binary on Linux or the other way round. `scripts/build.bat` is the
+Windows equivalent.
 
 ## 📦 Releases
 
@@ -102,10 +120,13 @@ Done in this repository:
 - [x] Publication date and video length, and hidden subscriber counts
 - [x] Terminal block charts over a longer window and a self-contained HTML report
 - [x] Releases with Linux and macOS binaries, checksums and optional GPG signature
-- [x] Sub-commands (`video`, `channel`, `latest`, `monitor`, `compare`, `export`) next to the flags
+- [x] Sub-commands (`video`, `channel`, `latest`, `monitor`, `compare`, `export`, `serve`) next to the flags
 - [x] `.env` configuration and messages for invalid keys, spent quota and rate limits
-- [x] pytest suite and a CI workflow building the Windows executable
-- [x] Linux and macOS support through the source install
+- [x] pytest suite and a CI workflow building the executables
+- [x] Linux and macOS support through the source install and the releases
+- [x] HTTP API server with JSON and small HTML pages, see [server](server.md)
+- [ ] Authentication for the API server when it is not localhost-only
+- [ ] Serving several channels over the API at once
 
 Planned:
 

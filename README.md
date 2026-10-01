@@ -4,8 +4,8 @@
 
 Command-line tool that tracks YouTube channel and video statistics over time.
 It refreshes the numbers on an interval, writes them to disk, keeps a local
-history so growth is measurable, and exports the result as CSV, JSON or an HTML
-report.
+history so growth is measurable, exports the result as CSV, JSON or an HTML
+report, and can serve the same numbers over a small HTTP API.
 
 | Channel statistics | Video statistics |
 | ------------------ | ---------------- |
@@ -34,6 +34,9 @@ python src/YST.py compare C7REVNM_EWY Xknt3_QJY7o
 
 # export the stored history
 python src/YST.py export UCifZaTQPiHE2QRgEwDNfhug
+
+# serve the numbers over HTTP on http://127.0.0.1:9132
+python src/YST.py serve UCifZaTQPiHE2QRgEwDNfhug
 ```
 
 On Linux and macOS use `./scripts/yst` in place of `python src/YST.py`.
@@ -47,7 +50,8 @@ Stop a run with `Ctrl+C`; results land in `txt/`, history in `data/`.
 | [Usage](docs/usage.md)                       | Interactive mode, sub-commands, every option           |
 | [Metrics and history](docs/metrics.md)       | Logged values, selection, deltas, dashboard, export   |
 | [Comparison and watchlists](docs/comparison.md) | Comparing videos and channels, monitoring a watchlist |
-| [Development](docs/development.md)           | Layout, tests, CI, releases and signing, roadmap      |
+| [API server](docs/server.md)           | HTTP endpoints, configuration, web pages              |
+| [Development](docs/development.md)     | Layout, tests, CI, releases and signing, roadmap      |
 
 Start with [usage](docs/usage.md) for the full option reference.
 

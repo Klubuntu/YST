@@ -16,8 +16,11 @@ from YST_lib.cli import (
 )
 from YST_lib.required import (
     DEFAULT_DB_PATH,
+    DEFAULT_SERVE_HOST,
+    DEFAULT_SERVE_PORT,
     EXPORT_FOLDER,
     EXPORT_FORMATS,
+    env_default,
     get_latest_video,
     logmode,
     sleep_time,
@@ -88,6 +91,19 @@ export_path = arguments.get("export_path") or EXPORT_FOLDER
 compare_ids = parse_id_list(arguments.get("compare"))
 compare_channels = parse_id_list(arguments.get("compare_channels"))
 watchlist_path = arguments.get("watchlist")
+serve_mode = parse_bool(arguments.get("serve"), False)
+serve_host = (arguments.get("serve_host") or env_default("YST_SERVE_HOST", DEFAULT_SERVE_HOST)).strip()
+serve_port = parse_int(
+    arguments.get("serve_port") or env_default("YST_SERVE_PORT", DEFAULT_SERVE_PORT),
+    DEFAULT_SERVE_PORT,
+    "serve_port",
+)
+if serve_port > 65535:
+    print(
+        f"{Fore.LIGHTYELLOW_EX}serve_port must be 1-65535, using "
+        f"{DEFAULT_SERVE_PORT}{Style.RESET_ALL}"
+    )
+    serve_port = DEFAULT_SERVE_PORT
 
 if list_logs:
     print_available_metrics()
@@ -128,4 +144,7 @@ options = {
     "report": report_mode,
     "export_format": export_format,
     "export_path": export_path,
+    "serve": serve_mode,
+    "serve_host": serve_host,
+    "serve_port": serve_port,
 }

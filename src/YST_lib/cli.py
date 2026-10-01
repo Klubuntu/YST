@@ -136,7 +136,7 @@ def parse_int(value, default, name="value"):
     return parsed
 
 
-SUBCOMMANDS = ("video", "channel", "latest", "monitor", "compare", "export")
+SUBCOMMANDS = ("video", "channel", "latest", "monitor", "compare", "export", "serve")
 
 SUBCOMMAND_HELP = """usage: yst <command> [options]
 
@@ -147,9 +147,11 @@ commands:
   monitor <ID>     channel monitoring with console output and deltas
   compare <ID...>  compare up to 50 videos side by side
   export <ID>      export the stored history to CSV and exit
+  serve <ID>       serve the channel over the API server
 
 Every command also accepts the regular options, for example:
   yst monitor UCifZaTQPiHE2QRgEwDNfhug -sleep_time=60 -dashboard=True
+  yst serve UCifZaTQPiHE2QRgEwDNfhug -serve_port=9132 -latest_video=True
 """
 
 
@@ -171,6 +173,7 @@ def expand_subcommand(tokens):
         "monitor": ["-latest_video=True", "-log_mode=True"],
         "compare": [],
         "export": ["-export=csv"],
+        "serve": ["-serve=True", "-latest_video=True", "-log_mode=True"],
     }[command]
 
     if command == "compare":

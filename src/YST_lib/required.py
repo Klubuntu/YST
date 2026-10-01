@@ -49,6 +49,10 @@ DEFAULT_DB_PATH = "data/yst.db"
 EXPORT_FOLDER = "exports"
 EXPORT_FORMATS = ("csv", "json")
 
+# API server
+DEFAULT_SERVE_HOST = "127.0.0.1"
+DEFAULT_SERVE_PORT = 9132
+
 
 def ensure_output_dir():
     try:
@@ -57,3 +61,11 @@ def ensure_output_dir():
         print(f"{Fore.LIGHTRED_EX}Cannot create output folder '{soft_dir}': {e}{Style.RESET_ALL}")
         sys.exit(1)
     return soft_dir
+
+
+def env_default(name, fallback):
+    """Read a setting from the environment, .env included."""
+    value = os.environ.get(name)
+    if value is None or not str(value).strip():
+        return fallback
+    return str(value).strip()
